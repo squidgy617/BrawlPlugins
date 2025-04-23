@@ -16,7 +16,7 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_isRunning = false;
     m_shouldExit = false;
 
-    m_buffer = gfHeapManager::alloc(Heaps::MenuResource, 0x10000);
+    m_buffer = gfHeapManager::alloc(Heaps::MenuResource, 0x40000);
 
     OSCreateThread(&m_thread, selCharLoadThread::main, this, m_stack + sizeof(m_stack), sizeof(m_stack), 31, 0);
 }
