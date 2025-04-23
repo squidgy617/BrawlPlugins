@@ -9,7 +9,6 @@
 #include <sy_core.h>
 #include <types.h>
 #include <vector.h>
-
 #include "sel_char_load_thread.h"
 
 using namespace nw4r::g3d;
@@ -40,7 +39,7 @@ namespace CSSHooks {
         void* data = selCharArchive->getData(Data_Type_Misc, id, 0xfffe);
 
         // if the CSP is not in the archive request to load the RSP instead
-        if (!thread->isReady() && data == NULL)
+        if (!thread->isReady() && data == NULL && thread->getLoadedCharKind() != charKind)
         {
             thread->requestLoad(charKind);
             return &area->m_charPicRes;
@@ -59,7 +58,7 @@ namespace CSSHooks {
         DCFlushRange(area->m_charPicData, 0x40000);
 
         // set ResFile to point to filedata
-        area->m_charPicRes = (ResFile)area->m_charPicData;
+        area->m_charPicRes = ResFile(area->m_charPicData);
 
         // init resFile and return
         ResFile::Init(&area->m_charPicRes);

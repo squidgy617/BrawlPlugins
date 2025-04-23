@@ -2,19 +2,21 @@
 #include <OS/OSCache.h>
 #include <VI/vi.h>
 #include <gf/gf_heap_manager.h>
+#include <gf/gf_file_io_manager.h>
 #include <memory.h>
 #include <mu/menu.h>
 #include <cstdio>
 
 selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
 {
+    m_loaded = -1;
     m_toLoad = -1;
     m_playerArea = area;
     m_dataReady = false;
     m_isRunning = false;
     m_shouldExit = false;
 
-    m_buffer = gfHeapManager::alloc(Heaps::MenuResource, 0x40000);
+    m_buffer = gfHeapManager::alloc(Heaps::MenuResource, 0x10000);
 
     OSCreateThread(&m_thread, selCharLoadThread::main, this, m_stack + sizeof(m_stack), sizeof(m_stack), 31, 0);
 }
@@ -29,7 +31,7 @@ void* selCharLoadThread::main(void* arg)
 
     while (!thread->m_shouldExit)
     {
-        if (thread->m_toLoad != -1)
+        if (thread->m_toLoad != -1 && g_gfFileIOManager->getNumActiveRequests() < 5)
         {
             charKind = thread->m_toLoad;
 
@@ -49,6 +51,7 @@ void* selCharLoadThread::main(void* arg)
             thread->m_handle.readRequest(filepath, thread->m_buffer, 0, 0);
 
             // Clear read request and signal that read is in progress
+            thread->m_loaded = thread->m_toLoad;
             thread->m_toLoad = -1;
             thread->m_isRunning = true;
             thread->m_dataReady = false;
@@ -63,7 +66,7 @@ void* selCharLoadThread::main(void* arg)
 
             area->setCharPic(charKind,
                              area->m_playerKind,
-                             area->m_charKind,
+                             area->m_charColorNo,
                              area->isTeamBattle(),
                              area->m_teamColor,
                              area->m_teamSet);

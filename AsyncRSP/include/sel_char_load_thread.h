@@ -14,6 +14,7 @@ protected:
     bool m_shouldExit;
     void* m_buffer;
     int m_toLoad;
+    int m_loaded;
     bool m_dataReady;
     bool m_isRunning;
 
@@ -26,6 +27,7 @@ public:
     void* getBuffer() { return m_buffer; }
     bool isRunning() { return m_isRunning; }
     bool isReady() { return m_dataReady; }
+    int getLoadedCharKind() { return m_loaded; }
     void exit()
     {
         m_shouldExit = true;
