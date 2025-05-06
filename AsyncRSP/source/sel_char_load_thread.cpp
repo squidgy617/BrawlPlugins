@@ -107,4 +107,3 @@ selCharLoadThread::~selCharLoadThread()
     m_handle.release();
 }
 
-// TODO: Replace with blank texture if not ready/replace with first four csps
