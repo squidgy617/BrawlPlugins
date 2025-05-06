@@ -39,35 +39,47 @@ namespace CSSHooks {
         void* data = selCharArchive->getData(Data_Type_Misc, id, 0xfffe);
 
         // if the CSP is not in the archive request to load the RSP instead
-        if (!thread->isReady() && data == NULL && thread->getLoadedCharKind() != charKind)
+        if (thread->getLoadedCharKind() != charKind)
         {
+            // to ensure we load more than just
+            // the first hovered character
+            thread->reset();
+
             thread->requestLoad(charKind);
+        }
+        if (!thread->isReady() || thread->isRunning()) {
+            CXUncompressLZ(data, area->m_charPicData);
+            // flush cache
+            DCFlushRange(area->m_charPicData, 0x40000);
+
+            // set ResFile to point to filedata
+            area->m_charPicRes = ResFile(area->m_charPicData);
+
+            // init resFile and return
+            ResFile::Init(&area->m_charPicRes);
+
             return &area->m_charPicRes;
         }
+        else {
+            // if the CSP data is in the archive, load the data from there
+            void* buffer = thread->getBuffer();
+            // copy data from temp load buffer
+            memcpy(area->m_charPicData, buffer, 0x40000);
 
-        // if the CSP data is in the archive, load the data from there
-        void* buffer = thread->getBuffer();
+            DCFlushRange(area->m_charPicData, 0x40000);
 
-        if (data != NULL)
-            CXUncompressLZ(data, buffer);
+            // set ResFile to point to filedata
+            area->m_charPicRes = ResFile(area->m_charPicData);
 
-        // copy data from temp load buffer
-        memcpy(area->m_charPicData, buffer, 0x40000);
+            // init resFile and return
+            ResFile::Init(&area->m_charPicRes);
 
-        // flush cache
-        DCFlushRange(area->m_charPicData, 0x40000);
+            return &area->m_charPicRes;
 
-        // set ResFile to point to filedata
-        area->m_charPicRes = ResFile(area->m_charPicData);
 
-        // init resFile and return
-        ResFile::Init(&area->m_charPicRes);
+        }
 
-        // to ensure we load more than just
-        // the first hovered character
-        thread->reset();
 
-        return &area->m_charPicRes;
     }
 
     muSelCharPlayerArea* (*_destroyPlayerAreas)(void*, int);

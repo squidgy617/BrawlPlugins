@@ -27,49 +27,50 @@ void* selCharLoadThread::main(void* arg)
     muSelCharPlayerArea* area = thread->m_playerArea;
     const char* format = "/menu/common/char_bust_tex/MenSelchrFaceB%02d0.brres";
     char filepath[0x34];
-    int charKind;
 
     while (!thread->m_shouldExit)
     {
-        if (thread->m_toLoad != -1 && g_gfFileIOManager->getNumActiveRequests() < 5)
-        {
-            charKind = thread->m_toLoad;
-
-            // If read is already in progress, cancel it and start new read request
-            if (thread->m_isRunning)
-            {
-                thread->reset();
-            }
-
-            // Handles conversions for poketrio and special slots
-            int id = muMenu::exchangeMuSelchkind2MuStockchkind(charKind);
-            id = muMenu::getStockFrameID(id);
-
-            sprintf(filepath, format, id);
-
-            // Start the read process
-            thread->m_handle.readRequest(filepath, thread->m_buffer, 0, 0);
-
-            // Clear read request and signal that read is in progress
-            thread->m_loaded = thread->m_toLoad;
-            thread->m_toLoad = -1;
-            thread->m_isRunning = true;
-            thread->m_dataReady = false;
-            continue;
-        }
-
         // Data is finished loading
         if (thread->m_isRunning && thread->m_handle.isReady())
         {
             thread->m_dataReady = true;
             thread->m_isRunning = false;
 
-            area->setCharPic(charKind,
+            area->setCharPic(area->m_charKind,
                              area->m_playerKind,
                              area->m_charColorNo,
                              area->isTeamBattle(),
                              area->m_teamColor,
                              area->m_teamSet);
+        }
+
+        if (thread->m_toLoad != -1) {
+            if (!thread->m_isRunning) {
+                int charKind = thread->m_toLoad;
+
+                // If read is already in progress, cancel it and start new read request
+                if (thread->m_isRunning)
+                {
+                    thread->reset();
+                }
+
+                // Handles conversions for poketrio and special slots
+                int id = muMenu::exchangeMuSelchkind2MuStockchkind(charKind);
+                id = muMenu::getStockFrameID(id);
+
+                sprintf(filepath, format, id);
+
+                // Start the read process
+                thread->m_handle.readRequest(filepath, thread->m_buffer, 0, 0);
+
+                // Clear read request and signal that read is in progress
+                thread->m_loaded = thread->m_toLoad;
+                thread->m_toLoad = -1;
+                thread->m_isRunning = true;
+                thread->m_dataReady = false;
+            }
+
+            continue;
         }
     }
 
@@ -89,11 +90,11 @@ void selCharLoadThread::requestLoad(int charKind)
 
 void selCharLoadThread::reset()
 {
-    if (m_isRunning)
-    {
-        m_handle.cancelRequest();
-        m_isRunning = false;
-    }
+//    if (m_isRunning)
+//    {
+//        m_handle.cancelRequest();
+//        m_isRunning = false;
+//    }
 
     m_dataReady = false;
     m_toLoad = -1;
@@ -105,3 +106,5 @@ selCharLoadThread::~selCharLoadThread()
     free(m_buffer);
     m_handle.release();
 }
+
+// TODO: Replace with blank texture if not ready/replace with first four csps
