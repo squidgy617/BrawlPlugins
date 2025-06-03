@@ -4,14 +4,12 @@
 #include <OS/OSThread.h>
 #include <gf/gf_file_io_handle.h>
 #include <mu/selchar/mu_selchar_player_area.h>
+#include <types.h>
 
-class selCharLoadThread {
+class selCharLoadThread : public OSThread {
 protected:
-    OSThread m_thread;
-    char m_stack[0x1000];
     gfFileIOHandle m_handle;
     muSelCharPlayerArea* m_playerArea;
-    bool m_shouldExit;
     void* m_buffer;
     int m_toLoad;
     int m_loaded;
@@ -21,18 +19,17 @@ protected:
 public:
     selCharLoadThread(muSelCharPlayerArea* area);
     void requestLoad(int charKind);
-    static void* main(void* arg);
+    void main();
     void start();
+    void suspend();
+    void resume();
     void reset();
     void* getBuffer() { return m_buffer; }
     bool isRunning() { return m_isRunning; }
     bool isReady() { return m_dataReady; }
+    void setCharPic();
+    int getToLoadCharKind() { return m_toLoad; }
     int getLoadedCharKind() { return m_loaded; }
-    void exit()
-    {
-        m_shouldExit = true;
-        OSJoinThread(&m_thread, NULL);
-    }
 
     ~selCharLoadThread();
 };

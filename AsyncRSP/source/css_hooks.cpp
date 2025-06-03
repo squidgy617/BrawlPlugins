@@ -22,7 +22,6 @@ namespace CSSHooks {
     {
         selCharLoadThread* thread = new (Heaps::Thread) selCharLoadThread(area);
         threads[area->m_areaIdx] = thread;
-        thread->start();
     }
 
     // NOTE: This hook gets triggered again by the load thread since
@@ -43,11 +42,9 @@ namespace CSSHooks {
         {
             // to ensure we load more than just
             // the first hovered character
-            thread->reset();
-
             thread->requestLoad(charKind);
         }
-        if (!thread->isReady() || thread->isRunning()) {
+        if (!thread->isReady() || thread->isRunning() || thread->getToLoadCharKind() != -1 || charKind != thread->getLoadedCharKind() || charKind != area->m_charKind) {
             CXUncompressLZ(data, area->m_charPicData);
             // flush cache
             DCFlushRange(area->m_charPicData, 0x40000);
@@ -75,11 +72,12 @@ namespace CSSHooks {
             ResFile::Init(&area->m_charPicRes);
 
             return &area->m_charPicRes;
-
-
         }
+    }
 
-
+    void (*_loadCharPic)(void*);
+    void loadCharPic(muSelCharPlayerArea* area) {
+        threads[area->m_areaIdx]->main();
     }
 
     muSelCharPlayerArea* (*_destroyPlayerAreas)(void*, int);
@@ -106,7 +104,14 @@ namespace CSSHooks {
                               (void**)&_destroyPlayerAreas,
                               Modules::SORA_MENU_SEL_CHAR);
 
+        api->syReplaceFuncRel(0x00012210,
+                              reinterpret_cast<void*>(loadCharPic),
+                              (void**)&_loadCharPic,
+                              Modules::SORA_MENU_SEL_CHAR);
+
+
         // hook to create threads when booting the CSS
         api->syInlineHookRel(0x3524, reinterpret_cast<void*>(createThreads), Modules::SORA_MENU_SEL_CHAR);
+
     }
 } // namespace CSSHooks

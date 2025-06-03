@@ -14,73 +14,63 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_playerArea = area;
     m_dataReady = false;
     m_isRunning = false;
-    m_shouldExit = false;
 
     m_buffer = gfHeapManager::alloc(Heaps::MenuResource, 0x40000);
-
-    OSCreateThread(&m_thread, selCharLoadThread::main, this, m_stack + sizeof(m_stack), sizeof(m_stack), 31, 0);
 }
 
-void* selCharLoadThread::main(void* arg)
+void selCharLoadThread::main()
 {
-    selCharLoadThread* thread = static_cast<selCharLoadThread*>(arg);
-    muSelCharPlayerArea* area = thread->m_playerArea;
+    muSelCharPlayerArea* area = this->m_playerArea;
     const char* format = "/menu/common/char_bust_tex/MenSelchrFaceB%02d0.brres";
     char filepath[0x34];
 
-    while (!thread->m_shouldExit)
+    // Data is finished loading
+    if (this->m_isRunning && this->m_handle.isReady())
     {
-        // Data is finished loading
-        if (thread->m_isRunning && thread->m_handle.isReady())
-        {
-            thread->m_dataReady = true;
-            thread->m_isRunning = false;
+        this->m_isRunning = false;
 
-            area->setCharPic(area->m_charKind,
+        if (this->m_toLoad == -1)
+        {
+            this->m_dataReady = true;
+            area->setCharPic(this->m_loaded,
                              area->m_playerKind,
                              area->m_charColorNo,
                              area->isTeamBattle(),
                              area->m_teamColor,
                              area->m_teamSet);
         }
-
-        if (thread->m_toLoad != -1) {
-            if (!thread->m_isRunning) {
-                int charKind = thread->m_toLoad;
-
-                // If read is already in progress, cancel it and start new read request
-                if (thread->m_isRunning)
-                {
-                    thread->reset();
-                }
-
-                // Handles conversions for poketrio and special slots
-                int id = muMenu::exchangeMuSelchkind2MuStockchkind(charKind);
-                id = muMenu::getStockFrameID(id);
-
-                sprintf(filepath, format, id);
-
-                // Start the read process
-                thread->m_handle.readRequest(filepath, thread->m_buffer, 0, 0);
-
-                // Clear read request and signal that read is in progress
-                thread->m_loaded = thread->m_toLoad;
-                thread->m_toLoad = -1;
-                thread->m_isRunning = true;
-                thread->m_dataReady = false;
-            }
-
-            continue;
-        }
     }
 
-    return NULL;
+    if (this->m_toLoad != -1)
+    {
+        if (!this->m_isRunning)
+        {
+            int charKind = this->m_toLoad;
+
+            // If read is already in progress, cancel it and start new read request
+            //                if (thread->m_isRunning)
+            //                {
+            //                    thread->reset();
+            //                }
+
+            // Handles conversions for poketrio and special slots
+            int id = muMenu::exchangeMuSelchkind2MuStockchkind(charKind);
+            id = muMenu::getStockFrameID(id);
+
+            // Clear read request and signal that read is in progress
+            this->m_isRunning = true;
+            this->m_dataReady = false;
+            this->m_loaded = this->m_toLoad;
+            this->m_toLoad = -1;
+
+            sprintf(filepath, format, id);
+
+            // Start the read process
+            this->m_handle.readRequest(filepath, this->m_buffer, 0, 0);
+        }
+    }
 }
 
-void selCharLoadThread::start()
-{
-    OSResumeThread(&m_thread);
-}
 
 void selCharLoadThread::requestLoad(int charKind)
 {
@@ -102,8 +92,9 @@ void selCharLoadThread::reset()
 
 selCharLoadThread::~selCharLoadThread()
 {
-    exit();
     free(m_buffer);
     m_handle.release();
 }
 
+// TODO: Fix race condition
+// TODO: Copy buffer if other players already loaded that character?
