@@ -78,6 +78,7 @@ namespace CSSHooks {
     void (*_loadCharPic)(void*);
     void loadCharPic(muSelCharPlayerArea* area) {
         threads[area->m_areaIdx]->main();
+        _loadCharPic(area);
     }
 
     muSelCharPlayerArea* (*_destroyPlayerAreas)(void*, int);

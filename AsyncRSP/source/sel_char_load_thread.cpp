@@ -29,7 +29,10 @@ void selCharLoadThread::main()
     {
         this->m_isRunning = false;
 
-        if (this->m_toLoad == -1)
+        if (area->m_charKind == 0x29) {
+            this->m_loaded = -1;
+        }
+        else if (this->m_toLoad == -1)
         {
             this->m_dataReady = true;
             area->setCharPic(this->m_loaded,
@@ -96,5 +99,4 @@ selCharLoadThread::~selCharLoadThread()
     m_handle.release();
 }
 
-// TODO: Fix race condition
 // TODO: Copy buffer if other players already loaded that character?
