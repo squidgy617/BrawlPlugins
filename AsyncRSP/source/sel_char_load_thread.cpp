@@ -7,6 +7,9 @@
 #include <mu/menu.h>
 #include <cstdio>
 
+const u8 excludedSelchKinds[] = {0x29, 0x38, 0x39, 0x3A, 0x3B};
+const u8 excludedSelchKindLength = sizeof(excludedSelchKinds) / sizeof(excludedSelchKinds[0]);
+
 selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
 {
     m_loaded = -1;
@@ -29,7 +32,7 @@ void selCharLoadThread::main()
     {
         this->m_isRunning = false;
 
-        if (area->m_charKind == 0x29) {
+        if (isExcludedSelchKind(area->m_charKind)) {
             this->m_loaded = -1;
         }
         else if (this->m_toLoad == -1)
@@ -91,6 +94,16 @@ void selCharLoadThread::reset()
 
     m_dataReady = false;
     m_toLoad = -1;
+}
+
+bool selCharLoadThread::isExcludedSelchKind(u8 selchKind) {
+    for (u8 i = 0; i < excludedSelchKindLength; i++) {
+        if (excludedSelchKinds[i] == selchKind) {
+            return true;
+        }
+    }
+    return false;
+
 }
 
 selCharLoadThread::~selCharLoadThread()

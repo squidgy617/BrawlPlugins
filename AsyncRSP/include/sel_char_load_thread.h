@@ -31,5 +31,7 @@ public:
     int getToLoadCharKind() { return m_toLoad; }
     int getLoadedCharKind() { return m_loaded; }
 
+    static bool isExcludedSelchKind(u8 selchKind);
+
     ~selCharLoadThread();
 };
