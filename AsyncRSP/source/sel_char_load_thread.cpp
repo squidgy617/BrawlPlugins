@@ -10,6 +10,8 @@
 const u8 excludedSelchKinds[] = {0x29, 0x38, 0x39, 0x3A, 0x3B};
 const u8 excludedSelchKindLength = sizeof(excludedSelchKinds) / sizeof(excludedSelchKinds[0]);
 
+selCharLoadThread* selCharLoadThread::s_threads[muSelCharTask::num_player_areas] = {};
+
 selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
 {
     m_loaded = -1;
@@ -19,6 +21,19 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_isRunning = false;
 
     m_buffer = gfHeapManager::alloc(Heaps::MenuResource, 0x40000);
+    s_threads[area->m_areaIdx] = this;
+}
+
+bool selCharLoadThread::findAndCopyThreadWithPortraitAlreadyLoaded(u8 selchKind) {
+    for (u8 i = 0; i < muSelCharTask::num_player_areas; i++) {
+        if (s_threads[i]->getAreaIdx() != i) {
+            if (s_threads[i]->isTargetPortraitReady(selchKind)) {
+                return true;
+
+            }
+        }
+    }
+    return false;
 }
 
 void selCharLoadThread::main()
@@ -51,6 +66,8 @@ void selCharLoadThread::main()
     {
         if (!this->m_isRunning)
         {
+            // TODO: Check if already loaded by other threads
+
             int charKind = this->m_toLoad;
 
             // If read is already in progress, cancel it and start new read request
@@ -96,13 +113,13 @@ void selCharLoadThread::reset()
     m_toLoad = -1;
 }
 
-bool selCharLoadThread::isExcludedSelchKind(u8 selchKind) {
-    for (u8 i = 0; i < excludedSelchKindLength; i++) {
-        if (excludedSelchKinds[i] == selchKind) {
-            return true;
-        }
-    }
-    return false;
+bool selCharLoadThread::isTargetPortraitReady(u8 selchKind) {
+    return !(!this->isReady() || this->isRunning() || this->getToLoadCharKind() != -1 || selchKind != this->getLoadedCharKind() || selchKind != this->m_playerArea->m_charKind);
+}
+
+void selCharLoadThread::setData(u8 selchKind, void* m_copy) {
+    this->m_loaded = selchKind;
+    this->m_dataReady = true;
 
 }
 
@@ -110,6 +127,21 @@ selCharLoadThread::~selCharLoadThread()
 {
     free(m_buffer);
     m_handle.release();
+    s_threads[this->getAreaIdx()] = NULL;
+}
+
+bool selCharLoadThread::isExcludedSelchKind(u8 selchKind) {
+    for (u8 i = 0; i < excludedSelchKindLength; i++) {
+        if (excludedSelchKinds[i] == selchKind) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+selCharLoadThread* selCharLoadThread::getThread(u8 areaIdx) {
+    return s_threads[areaIdx];
 }
 
 // TODO: Copy buffer if other players already loaded that character?

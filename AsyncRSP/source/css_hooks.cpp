@@ -9,26 +9,24 @@
 #include <sy_core.h>
 #include <types.h>
 #include <vector.h>
-#include "sel_char_load_thread.h"
+#include "css_hooks.h"
 
 using namespace nw4r::g3d;
 
 namespace CSSHooks {
 
     extern gfArchive* selCharArchive;
-    selCharLoadThread* threads[4];
 
     void createThreads(muSelCharPlayerArea* area)
     {
-        selCharLoadThread* thread = new (Heaps::Thread) selCharLoadThread(area);
-        threads[area->m_areaIdx] = thread;
+        selCharLoadThread* thread = new (Heaps::MenuResource) selCharLoadThread(area);
     }
 
     // NOTE: This hook gets triggered again by the load thread since
     // the thread calls `setCharPic` when data is finished loading
     ResFile* getCharPicTexResFile(register muSelCharPlayerArea* area, u32 charKind)
     {
-        selCharLoadThread* thread = threads[area->m_areaIdx];
+        selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
 
         // Handles conversions for poketrio and special slots
         int id = muMenu::exchangeMuSelchkind2MuStockchkind(charKind);
@@ -37,14 +35,13 @@ namespace CSSHooks {
         // check if CSP exists in archive first.
         void* data = selCharArchive->getData(Data_Type_Misc, id, 0xfffe);
 
+
         // if the CSP is not in the archive request to load the RSP instead
         if (thread->getLoadedCharKind() != charKind)
         {
-            // to ensure we load more than just
-            // the first hovered character
             thread->requestLoad(charKind);
         }
-        if (!thread->isReady() || thread->isRunning() || thread->getToLoadCharKind() != -1 || charKind != thread->getLoadedCharKind() || charKind != area->m_charKind) {
+        if (!thread->isTargetPortraitReady(charKind)) {
             CXUncompressLZ(data, area->m_charPicData);
             // flush cache
             DCFlushRange(area->m_charPicData, 0x40000);
@@ -77,7 +74,7 @@ namespace CSSHooks {
 
     void (*_loadCharPic)(void*);
     void loadCharPic(muSelCharPlayerArea* area) {
-        threads[area->m_areaIdx]->main();
+        selCharLoadThread::getThread(area->m_areaIdx)->main();
         _loadCharPic(area);
     }
 
@@ -85,8 +82,7 @@ namespace CSSHooks {
     muSelCharPlayerArea* destroyPlayerAreas(muSelCharPlayerArea* object, int external)
     {
         // destroy our load thread
-        delete threads[object->m_areaIdx];
-        threads[object->m_areaIdx] = 0;
+        delete selCharLoadThread::getThread(object->m_areaIdx);
 
         return _destroyPlayerAreas(object, external);
     }

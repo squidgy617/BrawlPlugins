@@ -8,6 +8,8 @@
 
 class selCharLoadThread : public OSThread {
 protected:
+    static selCharLoadThread* s_threads[muSelCharTask::num_player_areas];
+
     gfFileIOHandle m_handle;
     muSelCharPlayerArea* m_playerArea;
     void* m_buffer;
@@ -28,10 +30,19 @@ public:
     bool isRunning() { return m_isRunning; }
     bool isReady() { return m_dataReady; }
     void setCharPic();
+    int getAreaIdx() { return m_playerArea->m_areaIdx; }
     int getToLoadCharKind() { return m_toLoad; }
     int getLoadedCharKind() { return m_loaded; }
+    bool isTargetPortraitReady(u8 selchKind);
+    bool findAndCopyThreadWithPortraitAlreadyLoaded(u8 selchKind);
+    void setData(u8 selchKind, void* m_copy);
 
     static bool isExcludedSelchKind(u8 selchKind);
+    static selCharLoadThread* getThread(u8 areaIdx);
 
     ~selCharLoadThread();
 };
+
+
+
+
