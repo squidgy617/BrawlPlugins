@@ -35,7 +35,7 @@ public:
     int getLoadedCharKind() { return m_loaded; }
     bool isTargetPortraitReady(u8 selchKind);
     bool findAndCopyThreadWithPortraitAlreadyLoaded(u8 selchKind);
-    void setData(u8 selchKind, void* m_copy);
+    void setData(void* m_copy);
 
     static bool isExcludedSelchKind(u8 selchKind);
     static selCharLoadThread* getThread(u8 areaIdx);

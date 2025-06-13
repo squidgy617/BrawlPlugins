@@ -26,10 +26,10 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
 
 bool selCharLoadThread::findAndCopyThreadWithPortraitAlreadyLoaded(u8 selchKind) {
     for (u8 i = 0; i < muSelCharTask::num_player_areas; i++) {
-        if (s_threads[i]->getAreaIdx() != i) {
+        if (this->getAreaIdx() != i) {
             if (s_threads[i]->isTargetPortraitReady(selchKind)) {
+                this->setData(s_threads[i]->getBuffer());
                 return true;
-
             }
         }
     }
@@ -47,10 +47,7 @@ void selCharLoadThread::main()
     {
         this->m_isRunning = false;
 
-        if (isExcludedSelchKind(area->m_charKind)) {
-            this->m_loaded = -1;
-        }
-        else if (this->m_toLoad == -1)
+        if (this->m_toLoad == -1)
         {
             this->m_dataReady = true;
             area->setCharPic(this->m_loaded,
@@ -66,30 +63,34 @@ void selCharLoadThread::main()
     {
         if (!this->m_isRunning)
         {
-            // TODO: Check if already loaded by other threads
-
-            int charKind = this->m_toLoad;
-
-            // If read is already in progress, cancel it and start new read request
-            //                if (thread->m_isRunning)
-            //                {
-            //                    thread->reset();
-            //                }
-
-            // Handles conversions for poketrio and special slots
-            int id = muMenu::exchangeMuSelchkind2MuStockchkind(charKind);
-            id = muMenu::getStockFrameID(id);
-
-            // Clear read request and signal that read is in progress
-            this->m_isRunning = true;
-            this->m_dataReady = false;
             this->m_loaded = this->m_toLoad;
             this->m_toLoad = -1;
+            if (this->findAndCopyThreadWithPortraitAlreadyLoaded(this->m_loaded)) {
+                this->m_dataReady = true;
+                area->setCharPic(this->m_loaded,
+                                 area->m_playerKind,
+                                 area->m_charColorNo,
+                                 area->isTeamBattle(),
+                                 area->m_teamColor,
+                                 area->m_teamSet);
+            }
+            else {
+                // Clear read request and signal that read is in progress
 
-            sprintf(filepath, format, id);
+                this->m_isRunning = true;
+                this->m_dataReady = false;
 
-            // Start the read process
-            this->m_handle.readRequest(filepath, this->m_buffer, 0, 0);
+                // Handles conversions for poketrio and special slots
+                int charKind = this->m_loaded;
+                int id = muMenu::exchangeMuSelchkind2MuStockchkind(charKind);
+                id = muMenu::getStockFrameID(id);
+                sprintf(filepath, format, id);
+
+                // Start the read process
+                this->m_handle.readRequest(filepath, this->m_buffer, 0, 0);
+            }
+
+
         }
     }
 }
@@ -97,7 +98,12 @@ void selCharLoadThread::main()
 
 void selCharLoadThread::requestLoad(int charKind)
 {
-    m_toLoad = charKind;
+    if (isExcludedSelchKind(charKind)) {
+        m_toLoad = -1;
+    }
+    else {
+        m_toLoad = charKind;
+    }
     m_dataReady = false;
 }
 
@@ -117,10 +123,8 @@ bool selCharLoadThread::isTargetPortraitReady(u8 selchKind) {
     return !(!this->isReady() || this->isRunning() || this->getToLoadCharKind() != -1 || selchKind != this->getLoadedCharKind() || selchKind != this->m_playerArea->m_charKind);
 }
 
-void selCharLoadThread::setData(u8 selchKind, void* m_copy) {
-    this->m_loaded = selchKind;
-    this->m_dataReady = true;
-
+void selCharLoadThread::setData(void* copy) {
+    memcpy(this->m_buffer, copy, 0x40000);
 }
 
 selCharLoadThread::~selCharLoadThread()
