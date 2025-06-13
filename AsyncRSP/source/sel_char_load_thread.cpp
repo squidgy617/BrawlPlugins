@@ -95,6 +95,8 @@ void selCharLoadThread::main()
     }
 }
 
+// TODO: Load emblem when pic is loaded
+
 
 void selCharLoadThread::requestLoad(int charKind)
 {
@@ -147,5 +149,3 @@ bool selCharLoadThread::isExcludedSelchKind(u8 selchKind) {
 selCharLoadThread* selCharLoadThread::getThread(u8 areaIdx) {
     return s_threads[areaIdx];
 }
-
-// TODO: Copy buffer if other players already loaded that character?
