@@ -97,14 +97,17 @@ namespace CSSHooks {
             mr chrKind, r31;
         }
         selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
-            if (chrKind == 0x28) {
-                area->dispMarkKind(Selch_SelectNone);
+        if (chrKind == 0x28) {
+            area->dispMarkKind(Selch_SelectNone);
+        }
+        else if (thread->isExcludedSelchKind(chrKind)) {
+            area->dispMarkKind((MuSelchkind)chrKind);
+        }
+        else {
+            if (thread->isReady()) {
+                area->dispMarkKind((MuSelchkind)chrKind);
             }
-            else {
-                if (thread->isReady()) {
-                    area->dispMarkKind((MuSelchkind)chrKind);
-                }
-            }
+        }
         asm
         {
             addi r11,r1,0x80;
