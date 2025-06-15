@@ -38,7 +38,7 @@ namespace CSSHooks {
 
 
         // if the CSP is not in the archive request to load the RSP instead
-        if (thread->getLoadedCharKind() != charKind)
+        if (thread->getLoadedCharKind() != charKind || area->m_charKind != charKind)
         {
             thread->requestLoad(charKind);
         }
@@ -106,9 +106,13 @@ namespace CSSHooks {
         else if (thread->isExcludedSelchKind(chrKind)) {
             area->dispMarkKind((MuSelchkind)chrKind);
         }
+        // If going to an already loaded char, immediately update
+        else if ((!thread->isExcludedSelchKind(area->m_charKind) || area->m_charKind == 0x29) && thread->getLoadedCharKind() == chrKind) {
+            area->dispMarkKind((MuSelchkind)chrKind);
+        }
         // If regular char, only update once RSP is loaded
         else {
-            if (thread->isReady()) {
+            if (thread->isTargetPortraitReady(chrKind)) {
                 area->dispMarkKind((MuSelchkind)chrKind);
             }
         }
@@ -119,6 +123,7 @@ namespace CSSHooks {
         register muSelCharPlayerArea* area;
         register int chrKind;
         register float frameIndex;
+        register float newFrameIndex;
         // Pull vars from registers
         asm
         {
@@ -127,13 +132,20 @@ namespace CSSHooks {
             fsubs frameIndex, f0, f1;
         }
         selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
+        // If going to an already loaded char, immediately update
+        if ((!thread->isExcludedSelchKind(area->m_charKind) || area->m_charKind == 0x29) && thread->getLoadedCharKind() == chrKind) {
+            newFrameIndex = frameIndex;
+        }
         // If RSP is not ready, keep displaying the current frame
-        if (!thread->isReady() && !thread->isExcludedSelchKind(chrKind)) {
-            frameIndex = area->m_muCharName->m_modelAnim->getFrame();
+        else if (!thread->isReady() && !thread->isExcludedSelchKind(chrKind)) {
+            newFrameIndex = area->m_muCharName->m_modelAnim->getFrame();
+        }
+        else {
+            newFrameIndex = frameIndex;
         }
         // Otherwise, load the new frame in
         asm{
-            fsubs f1, f0, frameIndex;
+            fsubs f1, f0, newFrameIndex;
         }
     }
 
