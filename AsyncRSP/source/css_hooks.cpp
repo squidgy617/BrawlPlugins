@@ -91,26 +91,49 @@ namespace CSSHooks {
     void changeFranchiseIcon() {
         register muSelCharPlayerArea* area;
         register int chrKind;
+        // Pull vars from registers
         asm
         {
             mr area, r30;
             mr chrKind, r31;
         }
         selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
+        // If no char is selected, immediately update to none
         if (chrKind == 0x28) {
             area->dispMarkKind(Selch_SelectNone);
         }
+        // If excluded char is selected, immediately update
         else if (thread->isExcludedSelchKind(chrKind)) {
             area->dispMarkKind((MuSelchkind)chrKind);
         }
+        // If regular char, only update once RSP is loaded
         else {
             if (thread->isReady()) {
                 area->dispMarkKind((MuSelchkind)chrKind);
             }
         }
+    }
+
+    void changeName() {
+        // setFrameTex is called after this using the frame we determine here
+        register muSelCharPlayerArea* area;
+        register int chrKind;
+        register float frameIndex;
+        // Pull vars from registers
         asm
         {
-            addi r11,r1,0x80;
+            mr area, r30;
+            mr chrKind, r31;
+            fsubs frameIndex, f0, f1;
+        }
+        selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
+        // If RSP is not ready, keep displaying the current frame
+        if (!thread->isReady() && !thread->isExcludedSelchKind(chrKind)) {
+            frameIndex = area->m_muCharName->m_modelAnim->getFrame();
+        }
+        // Otherwise, load the new frame in
+        asm{
+            fsubs f1, f0, frameIndex;
         }
     }
 
@@ -140,6 +163,11 @@ namespace CSSHooks {
         // hook to change franchise icon when portrait loads
         api->syInlineHookRel(0x00014D98, 
                             reinterpret_cast<void*>(changeFranchiseIcon),
+                            Modules::SORA_MENU_SEL_CHAR);
+
+        // hook to change name when portrait loads
+        api->syInlineHookRel(0x00014D90, 
+                            reinterpret_cast<void*>(changeName),
                             Modules::SORA_MENU_SEL_CHAR);
 
     }
