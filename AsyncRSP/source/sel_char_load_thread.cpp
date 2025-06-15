@@ -93,6 +93,11 @@ void selCharLoadThread::main()
 
         }
     }
+
+    // if (this->isTargetPortraitReady(area->m_charKind))
+    // {
+    //     area->dispMarkKind(area->m_charKind);
+    // }
 }
 
 // TODO: Load emblem when pic is loaded

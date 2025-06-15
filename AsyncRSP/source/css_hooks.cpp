@@ -1,5 +1,6 @@
 #include <CX.h>
 #include <OS/OSCache.h>
+#include <os/OSError.h>
 #include <gf/gf_archive.h>
 #include <memory.h>
 #include <modules.h>
@@ -87,6 +88,29 @@ namespace CSSHooks {
         return _destroyPlayerAreas(object, external);
     }
 
+    void changeFranchiseIcon() {
+        register muSelCharPlayerArea* area;
+        register int chrKind;
+        asm
+        {
+            mr area, r30;
+            mr chrKind, r31;
+        }
+        selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
+            if (chrKind == 0x28) {
+                area->dispMarkKind(Selch_SelectNone);
+            }
+            else {
+                if (thread->isReady()) {
+                    area->dispMarkKind((MuSelchkind)chrKind);
+                }
+            }
+        asm
+        {
+            addi r11,r1,0x80;
+        }
+    }
+
     void InstallHooks(CoreApi* api)
     {
         // hook to load portraits from RSPs
@@ -109,6 +133,11 @@ namespace CSSHooks {
 
         // hook to create threads when booting the CSS
         api->syInlineHookRel(0x3524, reinterpret_cast<void*>(createThreads), Modules::SORA_MENU_SEL_CHAR);
+
+        // hook to change franchise icon when portrait loads
+        api->syInlineHookRel(0x00014D98, 
+                            reinterpret_cast<void*>(changeFranchiseIcon),
+                            Modules::SORA_MENU_SEL_CHAR);
 
     }
 } // namespace CSSHooks
