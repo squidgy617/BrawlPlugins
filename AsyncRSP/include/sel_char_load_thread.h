@@ -36,6 +36,7 @@ public:
     bool isTargetPortraitReady(u8 selchKind);
     bool findAndCopyThreadWithPortraitAlreadyLoaded(u8 selchKind);
     void setData(void* m_copy);
+    void setFrameTex(u8 areaIdx, u8 frameIndex);
 
     static bool isExcludedSelchKind(u8 selchKind);
     static selCharLoadThread* getThread(u8 areaIdx);

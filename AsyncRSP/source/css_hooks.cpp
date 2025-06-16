@@ -1,5 +1,6 @@
 #include <CX.h>
 #include <OS/OSCache.h>
+#include <os/OSError.h>
 #include <gf/gf_archive.h>
 #include <memory.h>
 #include <modules.h>
@@ -37,7 +38,7 @@ namespace CSSHooks {
 
 
         // if the CSP is not in the archive request to load the RSP instead
-        if (thread->getLoadedCharKind() != charKind)
+        if (thread->getLoadedCharKind() != charKind || area->m_charKind != charKind)
         {
             thread->requestLoad(charKind);
         }
@@ -87,6 +88,67 @@ namespace CSSHooks {
         return _destroyPlayerAreas(object, external);
     }
 
+    void changeFranchiseIcon() {
+        register muSelCharPlayerArea* area;
+        register int chrKind;
+        // Pull vars from registers
+        asm
+        {
+            mr area, r30;
+            mr chrKind, r31;
+        }
+        selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
+        // If no char is selected, immediately update to none
+        if (chrKind == 0x28) {
+            area->dispMarkKind(Selch_SelectNone);
+        }
+        // If excluded char is selected, immediately update
+        else if (thread->isExcludedSelchKind(chrKind)) {
+            area->dispMarkKind((MuSelchkind)chrKind);
+        }
+        // If going to an already loaded char, immediately update
+        else if ((!thread->isExcludedSelchKind(area->m_charKind) || area->m_charKind == 0x29) && thread->getLoadedCharKind() == chrKind) {
+            area->dispMarkKind((MuSelchkind)chrKind);
+        }
+        // If regular char, only update once RSP is loaded
+        else {
+            if (thread->isTargetPortraitReady(chrKind)) {
+                area->dispMarkKind((MuSelchkind)chrKind);
+            }
+        }
+    }
+
+    void changeName() {
+        // setFrameTex is called after this using the frame we determine here
+        register muSelCharPlayerArea* area;
+        register int chrKind;
+        register float frameIndex;
+        register float newFrameIndex;
+        // Pull vars from registers
+        asm
+        {
+            mr area, r30;
+            mr chrKind, r31;
+            fsubs frameIndex, f0, f1;
+        }
+        selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
+        // If going to an already loaded char, immediately update
+        if ((!thread->isExcludedSelchKind(area->m_charKind) || area->m_charKind == 0x29) && thread->getLoadedCharKind() == chrKind) {
+            newFrameIndex = frameIndex;
+        }
+        // If RSP is not ready, keep displaying the current frame
+        else if (!thread->isReady() && !thread->isExcludedSelchKind(chrKind)) {
+            newFrameIndex = area->m_muCharName->m_modelAnim->getFrame();
+        }
+        else {
+            newFrameIndex = frameIndex;
+        }
+        // Otherwise, load the new frame in
+        asm{
+            fsubs f1, f0, newFrameIndex;
+        }
+    }
+
     void InstallHooks(CoreApi* api)
     {
         // hook to load portraits from RSPs
@@ -109,6 +171,16 @@ namespace CSSHooks {
 
         // hook to create threads when booting the CSS
         api->syInlineHookRel(0x3524, reinterpret_cast<void*>(createThreads), Modules::SORA_MENU_SEL_CHAR);
+
+        // hook to change franchise icon when portrait loads
+        api->syInlineHookRel(0x00014D98, 
+                            reinterpret_cast<void*>(changeFranchiseIcon),
+                            Modules::SORA_MENU_SEL_CHAR);
+
+        // hook to change name when portrait loads
+        api->syInlineHookRel(0x00014D90, 
+                            reinterpret_cast<void*>(changeName),
+                            Modules::SORA_MENU_SEL_CHAR);
 
     }
 } // namespace CSSHooks

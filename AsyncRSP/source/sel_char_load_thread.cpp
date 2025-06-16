@@ -95,8 +95,6 @@ void selCharLoadThread::main()
     }
 }
 
-// TODO: Load emblem when pic is loaded
-
 
 void selCharLoadThread::requestLoad(int charKind)
 {
