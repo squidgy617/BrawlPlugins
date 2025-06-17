@@ -38,7 +38,7 @@ namespace CSSHooks {
 
 
         // if the CSP is not in the archive request to load the RSP instead
-        if (thread->getLoadedCharKind() != charKind)
+        if (thread->getLoadedCharKind() != charKind || charKind != area->m_charKind)
         {
             thread->requestLoad(charKind);
         }
@@ -98,15 +98,9 @@ namespace CSSHooks {
             mr chrKind, r31;
         }
         selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
-        // If no char is selected, immediately update to none
-        if (chrKind == 0x28) {
-            area->dispMarkKind(Selch_SelectNone);
-        }
         // If regular char, only update once RSP is loaded
-        else {
-            if (thread->isReady()) {
-                area->dispMarkKind((MuSelchkind)chrKind);
-            }
+        if (thread->getToLoadCharKind() == -1 || (chrKind == thread->getLoadedCharKind() && !thread->isExcludedSelchKind(area->m_charKind))) {
+            area->dispMarkKind((MuSelchkind)chrKind);
         }
     }
 
@@ -125,7 +119,7 @@ namespace CSSHooks {
         }
         selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
         // If RSP is not ready, keep displaying the current frame
-        if (!thread->isReady()) {
+        if (thread->getToLoadCharKind() != -1 && !(chrKind == thread->getLoadedCharKind() && !thread->isExcludedSelchKind(area->m_charKind))) {
             newFrameIndex = area->m_muCharName->m_modelAnim->getFrame();
         }
         else {
