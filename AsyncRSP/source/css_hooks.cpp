@@ -35,6 +35,9 @@ namespace CSSHooks {
 
         // check if CSP exists in archive first.
         void* data = selCharArchive->getData(Data_Type_Misc, id, 0xfffe);
+        if (data == NULL) {
+            data = selCharArchive->getData(Data_Type_Misc, 0, 0xfffe);
+        }
 
 
         // if the CSP is not in the archive request to load the RSP instead
@@ -42,25 +45,9 @@ namespace CSSHooks {
         {
             thread->requestLoad(charKind);
         }
-        if (!thread->isReady() && data != NULL) {
+        if (!thread->isReady()) {
             CXUncompressLZ(data, area->m_charPicData);
             // flush cache
-            DCFlushRange(area->m_charPicData, 0x40000);
-
-            // set ResFile to point to filedata
-            area->m_charPicRes = ResFile(area->m_charPicData);
-
-            // init resFile and return
-            ResFile::Init(&area->m_charPicRes);
-
-            return &area->m_charPicRes;
-        }
-        else if (thread->isReady()) {
-            // if the CSP data is in the archive, load the data from there
-            void* buffer = thread->getBuffer();
-            // copy data from temp load buffer
-            memcpy(area->m_charPicData, buffer, 0x40000);
-
             DCFlushRange(area->m_charPicData, 0x40000);
 
             // set ResFile to point to filedata
@@ -72,10 +59,11 @@ namespace CSSHooks {
             return &area->m_charPicRes;
         }
         else {
-            void* data = selCharArchive->getData(Data_Type_Misc, 0, 0xfffe);
+            // if the CSP data is in the archive, load the data from there
+            void* buffer = thread->getBuffer();
+            // copy data from temp load buffer
+            memcpy(area->m_charPicData, buffer, 0x40000);
 
-            CXUncompressLZ(data, area->m_charPicData);
-            // flush cache
             DCFlushRange(area->m_charPicData, 0x40000);
 
             // set ResFile to point to filedata
@@ -134,7 +122,7 @@ namespace CSSHooks {
         }
         selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
         // If RSP is not ready, keep displaying the current frame
-        if (!thread->isReady()) {
+        if (!thread->isReady() && chrKind != 0x29) {
             newFrameIndex = area->m_muCharName->m_modelAnim->getFrame();
         }
         else {
