@@ -42,7 +42,7 @@ namespace CSSHooks {
         {
             thread->requestLoad(charKind);
         }
-        if (!thread->isReady()) {
+        if (!thread->isReady() && data != NULL) {
             CXUncompressLZ(data, area->m_charPicData);
             // flush cache
             DCFlushRange(area->m_charPicData, 0x40000);
