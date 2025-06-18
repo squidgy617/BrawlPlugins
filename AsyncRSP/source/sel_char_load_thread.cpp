@@ -39,7 +39,14 @@ bool selCharLoadThread::findAndCopyThreadWithPortraitAlreadyLoaded(u8 selchKind)
 void selCharLoadThread::main()
 {
     muSelCharPlayerArea* area = this->m_playerArea;
-    const char* format = "/menu/common/char_bust_tex/MenSelchrFaceB%02d0.brres";
+    const char* format = "";
+    // TODO: instead of hardcoded IDs, always check for alt archive first, then RSP archive?
+    if (isExcludedSelchKind(m_toLoad)) {
+        format = "/menu/common/char_bust_alt/MenSelchrFaceB%02d0.brres";
+    }
+    else {
+        format = "/menu/common/char_bust_tex/MenSelchrFaceB%02d0.brres";
+    }
     char filepath[0x34];
 
     // Data is finished loading
@@ -98,7 +105,7 @@ void selCharLoadThread::main()
 
 void selCharLoadThread::requestLoad(int charKind)
 {
-    if (isExcludedSelchKind(charKind)) {
+    if (charKind == 0x29) {
         m_toLoad = -1;
     }
     else {
