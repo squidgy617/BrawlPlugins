@@ -19,6 +19,8 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_playerArea = area;
     m_dataReady = false;
     m_isRunning = false;
+    m_updateEmblem = false;
+    m_updateName = false;
 
     m_buffer = gfHeapManager::alloc(Heaps::MenuResource, 0x40000);
     s_threads[area->m_areaIdx] = this;
@@ -57,6 +59,7 @@ void selCharLoadThread::main()
         if (this->m_toLoad == -1)
         {
             this->m_dataReady = true;
+            this->imageLoaded();
             area->setCharPic(this->m_loaded,
                              area->m_playerKind,
                              area->m_charColorNo,
@@ -74,6 +77,7 @@ void selCharLoadThread::main()
             this->m_toLoad = -1;
             if (this->findAndCopyThreadWithPortraitAlreadyLoaded(this->m_loaded)) {
                 this->m_dataReady = true;
+                this->imageLoaded();
                 area->setCharPic(this->m_loaded,
                                  area->m_playerKind,
                                  area->m_charColorNo,

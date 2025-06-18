@@ -38,12 +38,20 @@ namespace CSSHooks {
         if (data == NULL) {
             data = selCharArchive->getData(Data_Type_Misc, 0, 0xfffe);
         }
+        // If CSP is in archive mark as loaded
+        else {
+            thread->imageLoaded();
+        }
 
 
         // if the CSP is not in the archive request to load the RSP instead
         if (thread->getLoadedCharKind() != charKind)
         {
             thread->requestLoad(charKind);
+        }
+        // If character is already loaded mark as such
+        else {
+            thread->imageLoaded();
         }
         if (!thread->isReady()) {
             CXUncompressLZ(data, area->m_charPicData);
@@ -102,8 +110,9 @@ namespace CSSHooks {
         }
         selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
         // If regular char, only update once RSP is loaded
-        if (thread->isReady()) {
+        if (thread->updateEmblem()) {
             area->dispMarkKind((MuSelchkind)chrKind);
+            thread->emblemUpdated();
         }
     }
 
@@ -122,11 +131,12 @@ namespace CSSHooks {
         }
         selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
         // If RSP is not ready, keep displaying the current frame
-        if (!thread->isReady() && chrKind != 0x29) {
+        if (!thread->updateName() && chrKind != 0x29) {
             newFrameIndex = area->m_muCharName->m_modelAnim->getFrame();
         }
         else {
             newFrameIndex = frameIndex;
+            thread->nameUpdated();
         }
         // Otherwise, load the new frame in
         asm{
