@@ -55,12 +55,27 @@ namespace CSSHooks {
 
             return &area->m_charPicRes;
         }
-        else {
+        else if (thread->isReady()) {
             // if the CSP data is in the archive, load the data from there
             void* buffer = thread->getBuffer();
             // copy data from temp load buffer
             memcpy(area->m_charPicData, buffer, 0x40000);
 
+            DCFlushRange(area->m_charPicData, 0x40000);
+
+            // set ResFile to point to filedata
+            area->m_charPicRes = ResFile(area->m_charPicData);
+
+            // init resFile and return
+            ResFile::Init(&area->m_charPicRes);
+
+            return &area->m_charPicRes;
+        }
+        else {
+            void* data = selCharArchive->getData(Data_Type_Misc, 0, 0xfffe);
+
+            CXUncompressLZ(data, area->m_charPicData);
+            // flush cache
             DCFlushRange(area->m_charPicData, 0x40000);
 
             // set ResFile to point to filedata
