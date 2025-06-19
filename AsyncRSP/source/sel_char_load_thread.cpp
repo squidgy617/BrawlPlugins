@@ -1,5 +1,6 @@
 #include "sel_char_load_thread.h"
 #include <OS/OSCache.h>
+#include <os/OSError.h>
 #include <VI/vi.h>
 #include <gf/gf_heap_manager.h>
 #include <gf/gf_file_io_manager.h>
@@ -52,7 +53,7 @@ void selCharLoadThread::main()
     char filepath[0x34];
 
     // Data is finished loading
-    if (this->m_isRunning && this->m_handle.isReady())
+    if (this->m_isRunning && this->m_handle.isReady() && this->m_handle.getReturnStatus() == 0)
     {
         this->m_isRunning = false;
 
@@ -67,6 +68,12 @@ void selCharLoadThread::main()
                              area->m_teamColor,
                              area->m_teamSet);
         }
+    }
+    else if (this->m_isRunning && this->m_handle.isReady() && this->m_handle.getReturnStatus() == 1){
+        OSReport("Could not load RSP archive for slot %d\n", area->m_charKind);
+        this->m_handle.cancelRequest();
+        this->m_dataReady = false;
+        this->m_isRunning = false;
     }
 
     if (this->m_toLoad != -1)
