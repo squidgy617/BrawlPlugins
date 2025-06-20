@@ -50,7 +50,7 @@ namespace CSSHooks {
             thread->requestLoad(charKind);
         }
         // If character is already loaded mark as such
-        else {
+        else if (area->m_charKind != charKind) {
             thread->imageLoaded();
         }
         if (!thread->isReady()) {
@@ -110,7 +110,7 @@ namespace CSSHooks {
         }
         selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
         // If regular char, only update once RSP is loaded
-        if (thread->updateEmblem()) {
+        if (thread->updateEmblem() || thread->isNoLoadSelchKind(chrKind)) {
             area->dispMarkKind((MuSelchkind)chrKind);
             thread->emblemUpdated();
         }
@@ -131,7 +131,7 @@ namespace CSSHooks {
         }
         selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
         // If RSP is not ready, keep displaying the current frame
-        if (!thread->updateName() && chrKind != 0x29) {
+        if (!thread->updateName() && !thread->isNoLoadSelchKind(chrKind)) {
             newFrameIndex = area->m_muCharName->m_modelAnim->getFrame();
         }
         else {
@@ -142,6 +142,27 @@ namespace CSSHooks {
         asm{
             fsubs f1, f0, newFrameIndex;
         }
+    }
+
+    asm void clearFranchiseIcons() {
+        nofralloc
+        cmpwi r31, 0x29	// if random, continue to call setFrameTex
+        beq setFrameTex
+        cmpwi r31, 0x28	// if none, continue to call setFrameTex
+        beq setFrameTex
+
+        lis r12, 0x8069			// otherwise, skip setFrameTex
+        ori r12, r12, 0x70dc
+        mtctr r12
+        bctrl
+        
+        setFrameTex:
+        lwz r3, 0x00B8 (r30) // original instruction
+
+        lis r12, 0x8069			// return
+        ori r12, r12, 0x70d8
+        mtctr r12
+        bctrl
     }
 
     void InstallHooks(CoreApi* api)
@@ -175,6 +196,11 @@ namespace CSSHooks {
         // hook to change name when portrait loads
         api->syInlineHookRel(0x00014D90, 
                             reinterpret_cast<void*>(changeName),
+                            Modules::SORA_MENU_SEL_CHAR);
+
+        // hook to clear existing franchise icon behavior
+        api->sySimpleHookRel(0x00014810,
+                            reinterpret_cast<void*>(clearFranchiseIcons),
                             Modules::SORA_MENU_SEL_CHAR);
 
     }

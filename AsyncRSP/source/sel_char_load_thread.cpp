@@ -10,6 +10,8 @@
 
 const u8 excludedSelchKinds[] = {0x29, 0x38, 0x39, 0x3A, 0x3B};
 const u8 excludedSelchKindLength = sizeof(excludedSelchKinds) / sizeof(excludedSelchKinds[0]);
+const u8 noLoadSelchKinds[] = {0x28, 0x29};
+const u8 noLoadSelchKindLength = sizeof(noLoadSelchKinds) / sizeof(noLoadSelchKinds[0]);
 
 selCharLoadThread* selCharLoadThread::s_threads[muSelCharTask::num_player_areas] = {};
 
@@ -22,6 +24,7 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_isRunning = false;
     m_updateEmblem = false;
     m_updateName = false;
+    m_lastSelectedCharKind = -1;
 
     m_buffer = gfHeapManager::alloc(Heaps::MenuResource, 0x40000);
     s_threads[area->m_areaIdx] = this;
@@ -57,7 +60,7 @@ void selCharLoadThread::main()
     {
         this->m_isRunning = false;
 
-        if (this->m_toLoad == -1)
+        if (!isNoLoadSelchKind(area->m_charKind) && this->m_toLoad == -1)
         {
             this->m_dataReady = true;
             this->imageLoaded();
@@ -68,8 +71,18 @@ void selCharLoadThread::main()
                              area->m_teamColor,
                              area->m_teamSet);
         }
+        else if (isNoLoadSelchKind(area->m_charKind)) {
+            this->m_dataReady = true;
+            imageLoaded();
+            area->setCharPic(area->m_charKind,
+                             area->m_playerKind,
+                             area->m_charColorNo,
+                             area->isTeamBattle(),
+                             area->m_teamColor,
+                             area->m_teamSet);
+        }
     }
-    else if (this->m_isRunning && this->m_handle.isReady() && this->m_handle.getReturnStatus() == 1){
+    else if ((this->m_isRunning && this->m_handle.isReady() && this->m_handle.getReturnStatus() == 1)) {
         OSReport("Could not load RSP archive for slot %d\n", area->m_charKind);
         this->m_handle.cancelRequest();
         this->m_dataReady = false;
@@ -116,12 +129,15 @@ void selCharLoadThread::main()
 
 void selCharLoadThread::requestLoad(int charKind)
 {
-    if (charKind == 0x29) {
+    if (isNoLoadSelchKind(charKind)) {
         m_toLoad = -1;
     }
     else {
         m_toLoad = charKind;
+        m_updateEmblem = false;
+        m_updateName = false;
     }
+    m_lastSelectedCharKind = charKind;
     m_dataReady = false;
 }
 
@@ -134,6 +150,8 @@ void selCharLoadThread::reset()
 //    }
 
     m_dataReady = false;
+    m_updateEmblem = false;
+    m_updateName = false;
     m_toLoad = -1;
 }
 
@@ -155,6 +173,15 @@ selCharLoadThread::~selCharLoadThread()
 bool selCharLoadThread::isExcludedSelchKind(u8 selchKind) {
     for (u8 i = 0; i < excludedSelchKindLength; i++) {
         if (excludedSelchKinds[i] == selchKind) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool selCharLoadThread::isNoLoadSelchKind(u8 selchKind) {
+    for (u8 i = 0; i < noLoadSelchKindLength; i++) {
+        if (noLoadSelchKinds[i] == selchKind) {
             return true;
         }
     }

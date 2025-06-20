@@ -19,6 +19,7 @@ protected:
     bool m_isRunning;
     bool m_updateEmblem;
     bool m_updateName;
+    int m_lastSelectedCharKind;
 
 public:
     selCharLoadThread(muSelCharPlayerArea* area);
@@ -46,6 +47,7 @@ public:
     void nameUpdated() { m_updateName = false; }
 
     static bool isExcludedSelchKind(u8 selchKind);
+    static bool isNoLoadSelchKind(u8 selchKind);
     static selCharLoadThread* getThread(u8 areaIdx);
 
     ~selCharLoadThread();
