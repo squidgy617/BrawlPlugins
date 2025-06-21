@@ -17,6 +17,9 @@ protected:
     int m_loaded;
     bool m_dataReady;
     bool m_isRunning;
+    bool m_updateEmblem;
+    bool m_updateName;
+    int m_lastSelectedCharKind;
 
 public:
     selCharLoadThread(muSelCharPlayerArea* area);
@@ -37,8 +40,14 @@ public:
     bool findAndCopyThreadWithPortraitAlreadyLoaded(u8 selchKind);
     void setData(void* m_copy);
     void setFrameTex(u8 areaIdx, u8 frameIndex);
+    void imageLoaded() { m_updateEmblem = true; m_updateName = true; }
+    bool updateEmblem() { return m_updateEmblem; }
+    bool updateName() { return m_updateName; }
+    void emblemUpdated() { m_updateEmblem = false; }
+    void nameUpdated() { m_updateName = false; }
 
     static bool isExcludedSelchKind(u8 selchKind);
+    static bool isNoLoadSelchKind(u8 selchKind);
     static selCharLoadThread* getThread(u8 areaIdx);
 
     ~selCharLoadThread();

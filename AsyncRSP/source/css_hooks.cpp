@@ -35,14 +35,25 @@ namespace CSSHooks {
 
         // check if CSP exists in archive first.
         void* data = selCharArchive->getData(Data_Type_Misc, id, 0xfffe);
+        if (data == NULL) {
+            data = selCharArchive->getData(Data_Type_Misc, 0, 0xfffe);
+        }
+        // If CSP is in archive mark as loaded
+        else {
+            thread->imageLoaded();
+        }
 
 
         // if the CSP is not in the archive request to load the RSP instead
-        if (thread->getLoadedCharKind() != charKind || area->m_charKind != charKind)
+        if (thread->getLoadedCharKind() != charKind)
         {
             thread->requestLoad(charKind);
         }
-        if (!thread->isTargetPortraitReady(charKind)) {
+        // If character is already loaded mark as such
+        else if (area->m_charKind != charKind) {
+            thread->imageLoaded();
+        }
+        if (!thread->isReady()) {
             CXUncompressLZ(data, area->m_charPicData);
             // flush cache
             DCFlushRange(area->m_charPicData, 0x40000);
@@ -98,23 +109,10 @@ namespace CSSHooks {
             mr chrKind, r31;
         }
         selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
-        // If no char is selected, immediately update to none
-        if (chrKind == 0x28) {
-            area->dispMarkKind(Selch_SelectNone);
-        }
-        // If excluded char is selected, immediately update
-        else if (thread->isExcludedSelchKind(chrKind)) {
-            area->dispMarkKind((MuSelchkind)chrKind);
-        }
-        // If going to an already loaded char, immediately update
-        else if ((!thread->isExcludedSelchKind(area->m_charKind) || area->m_charKind == 0x29) && thread->getLoadedCharKind() == chrKind) {
-            area->dispMarkKind((MuSelchkind)chrKind);
-        }
         // If regular char, only update once RSP is loaded
-        else {
-            if (thread->isTargetPortraitReady(chrKind)) {
-                area->dispMarkKind((MuSelchkind)chrKind);
-            }
+        if (thread->updateEmblem() || thread->isNoLoadSelchKind(chrKind)) {
+            area->dispMarkKind((MuSelchkind)chrKind);
+            thread->emblemUpdated();
         }
     }
 
@@ -132,21 +130,39 @@ namespace CSSHooks {
             fsubs frameIndex, f0, f1;
         }
         selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
-        // If going to an already loaded char, immediately update
-        if ((!thread->isExcludedSelchKind(area->m_charKind) || area->m_charKind == 0x29) && thread->getLoadedCharKind() == chrKind) {
-            newFrameIndex = frameIndex;
-        }
         // If RSP is not ready, keep displaying the current frame
-        else if (!thread->isReady() && !thread->isExcludedSelchKind(chrKind)) {
+        if (!thread->updateName() && !thread->isNoLoadSelchKind(chrKind)) {
             newFrameIndex = area->m_muCharName->m_modelAnim->getFrame();
         }
         else {
             newFrameIndex = frameIndex;
+            thread->nameUpdated();
         }
         // Otherwise, load the new frame in
         asm{
             fsubs f1, f0, newFrameIndex;
         }
+    }
+
+    asm void clearFranchiseIcons() {
+        nofralloc
+        cmpwi r31, 0x29	// if random, continue to call setFrameTex
+        beq setFrameTex
+        cmpwi r31, 0x28	// if none, continue to call setFrameTex
+        beq setFrameTex
+
+        lis r12, 0x8069			// otherwise, skip setFrameTex
+        ori r12, r12, 0x70dc
+        mtctr r12
+        bctrl
+        
+        setFrameTex:
+        lwz r3, 0x00B8 (r30) // original instruction
+
+        lis r12, 0x8069			// return
+        ori r12, r12, 0x70d8
+        mtctr r12
+        bctrl
     }
 
     void InstallHooks(CoreApi* api)
@@ -180,6 +196,11 @@ namespace CSSHooks {
         // hook to change name when portrait loads
         api->syInlineHookRel(0x00014D90, 
                             reinterpret_cast<void*>(changeName),
+                            Modules::SORA_MENU_SEL_CHAR);
+
+        // hook to clear existing franchise icon behavior
+        api->sySimpleHookRel(0x00014810,
+                            reinterpret_cast<void*>(clearFranchiseIcons),
                             Modules::SORA_MENU_SEL_CHAR);
 
     }
