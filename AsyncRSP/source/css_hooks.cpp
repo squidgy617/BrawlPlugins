@@ -43,7 +43,7 @@ namespace CSSHooks {
             thread->imageLoaded();
         }
 
-        register int costumeID, slotID;
+        register int costumeID;
 
         asm
         {
@@ -55,7 +55,7 @@ namespace CSSHooks {
         // if the CSP is not in the archive request to load the RSP instead
         if (thread->getLoadedCharKind() != charKind || (thread->getLoadedCharKind() == charKind && thread->getLoadedCosNo()/10 != costume / 10))
         {
-            thread->requestLoad(charKind, area->m_charColorNo);
+            thread->requestLoad(charKind, costumeID);
         }
         // If character is already loaded mark as such
         else if (area->m_charKind != charKind) {
