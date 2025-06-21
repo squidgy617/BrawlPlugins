@@ -43,11 +43,19 @@ namespace CSSHooks {
             thread->imageLoaded();
         }
 
+        register int costumeID, slotID;
+
+        asm
+        {
+            mr costumeID, r24;
+        }
+        int costume = muMenu::getFighterColorFileNo(charKind,costumeID);
+
 
         // if the CSP is not in the archive request to load the RSP instead
-        if (thread->getLoadedCharKind() != charKind)
+        if (thread->getLoadedCharKind() != charKind || (thread->getLoadedCharKind() == charKind && thread->getLoadedCosNo()/10 != costume / 10))
         {
-            thread->requestLoad(charKind);
+            thread->requestLoad(charKind, area->m_charColorNo);
         }
         // If character is already loaded mark as such
         else if (area->m_charKind != charKind) {

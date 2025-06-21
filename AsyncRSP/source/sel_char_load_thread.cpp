@@ -19,6 +19,8 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
 {
     m_loaded = -1;
     m_toLoad = -1;
+    m_toLoadCosNo = -1;
+    m_loadedCosNo = -1;
     m_playerArea = area;
     m_dataReady = false;
     m_isRunning = false;
@@ -30,10 +32,10 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     s_threads[area->m_areaIdx] = this;
 }
 
-bool selCharLoadThread::findAndCopyThreadWithPortraitAlreadyLoaded(u8 selchKind) {
+bool selCharLoadThread::findAndCopyThreadWithPortraitAlreadyLoaded(u8 selchKind, u8 selchNo = 0) {
     for (u8 i = 0; i < muSelCharTask::num_player_areas; i++) {
         if (this->getAreaIdx() != i) {
-            if (s_threads[i]->isTargetPortraitReady(selchKind)) {
+            if (s_threads[i]->isTargetPortraitReady(selchKind, selchNo)) {
                 this->setData(s_threads[i]->getBuffer());
                 return true;
             }
@@ -48,10 +50,10 @@ void selCharLoadThread::main()
     const char* format = "";
     // TODO: instead of hardcoded IDs, always check for alt archive first, then RSP archive?
     if (isExcludedSelchKind(m_toLoad)) {
-        format = "/menu/common/char_bust_alt/MenSelchrFaceB%02d0.brres";
+        format = "/menu/common/char_bust_alt/MenSelchrFaceB%02d%d.brres";
     }
     else {
-        format = "/menu/common/char_bust_tex/MenSelchrFaceB%02d0.brres";
+        format = "/menu/common/char_bust_tex/MenSelchrFaceB%02d%d.brres";
     }
     char filepath[0x34];
 
@@ -95,7 +97,9 @@ void selCharLoadThread::main()
         {
             this->m_loaded = this->m_toLoad;
             this->m_toLoad = -1;
-            if (this->findAndCopyThreadWithPortraitAlreadyLoaded(this->m_loaded)) {
+            this->m_loadedCosNo = this->m_toLoadCosNo;
+            this->m_toLoadCosNo = -1;
+            if (this->findAndCopyThreadWithPortraitAlreadyLoaded(this->m_loaded,this->m_loadedCosNo)) {
                 this->m_dataReady = true;
                 this->imageLoaded();
                 area->setCharPic(this->m_loaded,
@@ -115,7 +119,8 @@ void selCharLoadThread::main()
                 int charKind = this->m_loaded;
                 int id = muMenu::exchangeMuSelchkind2MuStockchkind(charKind);
                 id = muMenu::getStockFrameID(id);
-                sprintf(filepath, format, id);
+                int id_cosNum = this->m_loadedCosNo/10;
+                sprintf(filepath, format, id, id_cosNum);
 
                 // Start the read process
                 this->m_handle.readRequest(filepath, this->m_buffer, 0, 0);
@@ -127,13 +132,15 @@ void selCharLoadThread::main()
 }
 
 
-void selCharLoadThread::requestLoad(int charKind)
+void selCharLoadThread::requestLoad(int charKind, u8 selchNo)
 {
     if (isNoLoadSelchKind(charKind)) {
         m_toLoad = -1;
+        m_toLoadCosNo = -1;
     }
     else {
         m_toLoad = charKind;
+        m_toLoadCosNo = muMenu::getFighterColorFileNo(charKind,selchNo);
         m_updateEmblem = false;
         m_updateName = false;
     }
@@ -153,10 +160,11 @@ void selCharLoadThread::reset()
     m_updateEmblem = false;
     m_updateName = false;
     m_toLoad = -1;
+    m_toLoadCosNo = -1;
 }
 
-bool selCharLoadThread::isTargetPortraitReady(u8 selchKind) {
-    return !(!this->isReady() || this->isRunning() || this->getToLoadCharKind() != -1 || selchKind != this->getLoadedCharKind() || selchKind != this->m_playerArea->m_charKind);
+bool selCharLoadThread::isTargetPortraitReady(u8 selchKind, u8 selchNo) {
+    return !(!this->isReady() || this->isRunning() || this->getToLoadCharKind() != -1 || selchKind != this->getLoadedCharKind() || selchKind != this->m_playerArea->m_charKind || this->m_toLoadCosNo != -1 || (selchKind == this->getLoadedCharKind() && selchNo/10 != this->getLoadedCosNo()/10));
 }
 
 void selCharLoadThread::setData(void* copy) {

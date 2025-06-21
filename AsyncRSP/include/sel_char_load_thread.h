@@ -13,8 +13,8 @@ protected:
     gfFileIOHandle m_handle;
     muSelCharPlayerArea* m_playerArea;
     void* m_buffer;
-    int m_toLoad;
-    int m_loaded;
+    int m_toLoad, m_toLoadCosNo;
+    int m_loaded, m_loadedCosNo;
     bool m_dataReady;
     bool m_isRunning;
     bool m_updateEmblem;
@@ -23,7 +23,7 @@ protected:
 
 public:
     selCharLoadThread(muSelCharPlayerArea* area);
-    void requestLoad(int charKind);
+    void requestLoad(int charKind, u8 selchNo);
     void main();
     void start();
     void suspend();
@@ -36,8 +36,10 @@ public:
     int getAreaIdx() { return m_playerArea->m_areaIdx; }
     int getToLoadCharKind() { return m_toLoad; }
     int getLoadedCharKind() { return m_loaded; }
-    bool isTargetPortraitReady(u8 selchKind);
-    bool findAndCopyThreadWithPortraitAlreadyLoaded(u8 selchKind);
+    int getLoadedCosNo() { return m_loadedCosNo; }
+    void setLoadedCosNo(int cosNo) { m_loadedCosNo = cosNo; }
+    bool isTargetPortraitReady(u8 selchKind, u8 selchNo);
+    bool findAndCopyThreadWithPortraitAlreadyLoaded(u8 selchKind, u8 selchNo);
     void setData(void* m_copy);
     void setFrameTex(u8 areaIdx, u8 frameIndex);
     void imageLoaded() { m_updateEmblem = true; m_updateName = true; }
