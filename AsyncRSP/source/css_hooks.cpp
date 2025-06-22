@@ -84,6 +84,23 @@ namespace CSSHooks {
         }
     }
 
+    void blankImage(MuObject* charPic)
+    {
+        charPic->changeMaterialTex(1,"MenSelchrFaceB.501");
+        charPic->changeMaterialTex(0,"MenSelchrFaceB.501");
+    }
+
+    void leavingSlot()
+    {
+        register muSelCharPlayerArea* area;
+        asm
+        {
+            mr area, r30;
+        }
+        blankImage(area->m_muCharPic);
+
+    }
+
     void (*_loadCharPic)(void*);
     void loadCharPic(muSelCharPlayerArea* area) {
         selCharLoadThread::getThread(area->m_areaIdx)->main();
@@ -165,6 +182,20 @@ namespace CSSHooks {
         bctrl
     }
 
+    void onModuleLoaded(gfModuleInfo* info)
+    {
+        gfModuleHeader* header = info->m_module->header;
+        Modules::_modules moduleID = static_cast<Modules::_modules>(header->id);
+        u32 textAddr = header->getTextSectionAddr();
+        u32 writeAddr;
+
+        if (moduleID == Modules::SORA_MENU_SEL_CHAR)
+        {  
+            writeAddr = 0x806C8734; //Yeah I didn't bother to do anything fancy here since it is in a different module
+            *(u32*)writeAddr = 0x3CE00021; //lis r7, 0x21 806C8734. Originally lis r7, 0x10. Related to memory allocated for the entire CSS.
+        }
+    }
+
     void InstallHooks(CoreApi* api)
     {
         // hook to load portraits from RSPs
@@ -188,10 +219,16 @@ namespace CSSHooks {
         // hook to create threads when booting the CSS
         api->syInlineHookRel(0x3524, reinterpret_cast<void*>(createThreads), Modules::SORA_MENU_SEL_CHAR);
 
+        // hook to clear CSPs when no fighter is selected
+        api->syInlineHookRel(0x14BC8, reinterpret_cast<void*>(leavingSlot), Modules::SORA_MENU_SEL_CHAR);
+
         // hook to change franchise icon when portrait loads
         api->syInlineHookRel(0x00014D98, 
                             reinterpret_cast<void*>(changeFranchiseIcon),
                             Modules::SORA_MENU_SEL_CHAR);
+
+        // subscribe to onModuleLoaded event
+        api->moduleLoadEventSubscribe(static_cast<SyringeCore::ModuleLoadCB>(onModuleLoaded));
 
         // hook to change name when portrait loads
         api->syInlineHookRel(0x00014D90, 
