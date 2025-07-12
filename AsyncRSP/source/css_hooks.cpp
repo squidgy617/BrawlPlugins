@@ -32,6 +32,7 @@ namespace CSSHooks {
         // Handles conversions for poketrio and special slots
         int id = muMenu::exchangeMuSelchkind2MuStockchkind(charKind);
         id = muMenu::getStockFrameID(id);
+        bool cspExists = false;
 
         // check if CSP exists in archive first.
         void* data = selCharArchive->getData(Data_Type_Misc, id, 0xfffe);
@@ -40,14 +41,14 @@ namespace CSSHooks {
         }
         // If CSP is in archive mark as loaded
         else {
+            cspExists = true;
             thread->imageLoaded();
         }
-
 
         // if the CSP is not in the archive request to load the RSP instead
         if (thread->getLoadedCharKind() != charKind)
         {
-            thread->requestLoad(charKind);
+            thread->requestLoad(charKind, cspExists);
         }
         // If character is already loaded mark as such
         else if (area->m_charKind != charKind) {
@@ -127,7 +128,7 @@ namespace CSSHooks {
         }
         selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
         // If regular char, only update once RSP is loaded
-        if (thread->updateEmblem() || thread->isNoLoadSelchKind(chrKind)) {
+        if (thread->shouldUpdateEmblem() || thread->isNoLoadSelchKind(chrKind)) {
             area->dispMarkKind((MuSelchkind)chrKind);
             thread->emblemUpdated();
         }
@@ -148,7 +149,7 @@ namespace CSSHooks {
         }
         selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
         // If RSP is not ready, keep displaying the current frame
-        if (!thread->updateName() && !thread->isNoLoadSelchKind(chrKind)) {
+        if (!thread->shouldUpdateName() && !thread->isNoLoadSelchKind(chrKind)) {
             newFrameIndex = area->m_muCharName->m_modelAnim->getFrame();
         }
         else {
