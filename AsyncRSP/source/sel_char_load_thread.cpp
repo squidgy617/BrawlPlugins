@@ -33,7 +33,8 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
 bool selCharLoadThread::findAndCopyThreadWithPortraitAlreadyLoaded(u8 selchKind) {
     for (u8 i = 0; i < muSelCharTask::num_player_areas; i++) {
         if (this->getAreaIdx() != i) {
-            if (s_threads[i]->isTargetPortraitReady(selchKind)) {
+            if (s_threads[i] != nullptr &&
+                s_threads[i]->isTargetPortraitReady(selchKind)) {
                 this->setData(s_threads[i]->getBuffer());
                 return true;
             }
