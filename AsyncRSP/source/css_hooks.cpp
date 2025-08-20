@@ -210,8 +210,8 @@ namespace CSSHooks {
             writeAddr = 0x806C8734; //Yeah I didn't bother to do anything fancy here since it is in a different module
             *(u32*)writeAddr = 0x3CE00049; //lis r7, 0x21 806C8734. Originally lis r7, 0x10. Related to memory allocated for the entire CSS.
 
-            writeAddr = 0x80693B10; //Yeah I didn't bother to do anything fancy here since it is in a different module
-            *(u32*)writeAddr = 0x38600013; //lis r7, 0x21 806C8734. Originally lis r7, 0x10. Related to memory allocated for the entire CSS.
+            writeAddr = 0x80693B10;
+            *(u32*)writeAddr = 0x38600013;
         }
     }
 
