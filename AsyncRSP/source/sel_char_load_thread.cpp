@@ -26,7 +26,23 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_updateName = false;
     m_lastSelectedCharKind = -1;
 
-    m_buffer = gfHeapManager::alloc(Heaps::MenuResource, 0x40000);
+    Heaps::HeapType heap = Heaps::Fighter1Resource;
+    switch (area->m_areaIdx)
+    {
+        case 0:
+            heap = Heaps::Fighter1Resource;
+            break;
+        case 1:
+            heap = Heaps::Fighter2Resource;
+            break;
+        case 2:
+            heap = Heaps::Fighter3Resource;
+            break;
+        case 3:
+            heap = Heaps::Fighter4Resource;
+            break;
+    }
+    m_buffer = gfHeapManager::alloc(heap, 0x140000);
     s_threads[area->m_areaIdx] = this;
 }
 
@@ -161,7 +177,7 @@ bool selCharLoadThread::isTargetPortraitReady(u8 selchKind) {
 }
 
 void selCharLoadThread::setData(void* copy) {
-    memcpy(this->m_buffer, copy, 0x40000);
+    memcpy(this->m_buffer, copy, 0x140000);
 }
 
 selCharLoadThread::~selCharLoadThread()

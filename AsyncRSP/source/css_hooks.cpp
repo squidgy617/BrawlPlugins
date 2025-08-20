@@ -20,7 +20,23 @@ namespace CSSHooks {
 
     void createThreads(muSelCharPlayerArea* area)
     {
-        selCharLoadThread* thread = new (Heaps::MenuResource) selCharLoadThread(area);
+        Heaps::HeapType heap = Heaps::Fighter1Resource;
+        switch (area->m_areaIdx)
+        {
+            case 0:
+                heap = Heaps::Fighter1Resource;
+                break;
+            case 1:
+                heap = Heaps::Fighter2Resource;
+                break;
+            case 2:
+                heap = Heaps::Fighter3Resource;
+                break;
+            case 3:
+                heap = Heaps::Fighter4Resource;
+                break;
+        }
+        selCharLoadThread* thread = new (heap) selCharLoadThread(area);
     }
 
     // NOTE: This hook gets triggered again by the load thread since
@@ -56,7 +72,7 @@ namespace CSSHooks {
         if (!thread->isReady()) {
             CXUncompressLZ(data, area->m_charPicData);
             // flush cache
-            DCFlushRange(area->m_charPicData, 0x40000);
+            DCFlushRange(area->m_charPicData, 0x140000);
 
             // set ResFile to point to filedata
             area->m_charPicRes = ResFile(area->m_charPicData);
@@ -70,9 +86,9 @@ namespace CSSHooks {
             // if the CSP data is in the archive, load the data from there
             void* buffer = thread->getBuffer();
             // copy data from temp load buffer
-            memcpy(area->m_charPicData, buffer, 0x40000);
+            memcpy(area->m_charPicData, buffer, 0x140000);
 
-            DCFlushRange(area->m_charPicData, 0x40000);
+            DCFlushRange(area->m_charPicData, 0x140000);
 
             // set ResFile to point to filedata
             area->m_charPicRes = ResFile(area->m_charPicData);
@@ -192,7 +208,7 @@ namespace CSSHooks {
         if (moduleID == Modules::SORA_MENU_SEL_CHAR)
         {  
             writeAddr = 0x806C8734; //Yeah I didn't bother to do anything fancy here since it is in a different module
-            *(u32*)writeAddr = 0x3CE00021; //lis r7, 0x21 806C8734. Originally lis r7, 0x10. Related to memory allocated for the entire CSS.
+            *(u32*)writeAddr = 0x3CE00049; //lis r7, 0x21 806C8734. Originally lis r7, 0x10. Related to memory allocated for the entire CSS.
         }
     }
 
