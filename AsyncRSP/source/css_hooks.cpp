@@ -36,7 +36,7 @@ namespace CSSHooks {
         //         heap = Heaps::Fighter4Resource;
         //         break;
         // }
-        selCharLoadThread* thread = new (Heaps::Fighter1Resource) selCharLoadThread(area);
+        selCharLoadThread* thread = new (heap) selCharLoadThread(area);
     }
 
     // NOTE: This hook gets triggered again by the load thread since
