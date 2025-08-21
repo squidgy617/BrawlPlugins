@@ -26,7 +26,7 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_updateName = false;
     m_lastSelectedCharKind = -1;
 
-    m_buffer = gfHeapManager::alloc(Heaps::MenuResource, 0xE0000);
+    m_buffer = gfHeapManager::alloc(Heaps::Fighter3Resource, 0xE0000);
     s_threads[area->m_areaIdx] = this;
 }
 

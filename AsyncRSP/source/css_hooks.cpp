@@ -207,13 +207,14 @@ namespace CSSHooks {
 
         if (moduleID == Modules::SORA_MENU_SEL_CHAR)
         {  
-            writeAddr = 0x806C8734; //Yeah I didn't bother to do anything fancy here since it is in a different module
-            *(u32*)writeAddr = 0x3CE00049; //lis r7, 0x21 806C8734. Originally lis r7, 0x10. Related to memory allocated for the entire CSS.
+            // No longer needed since we're using the FighterResource heaps for the portraits?
+            // writeAddr = 0x806C8734; //Yeah I didn't bother to do anything fancy here since it is in a different module
+            // *(u32*)writeAddr = 0x3CE00021; //lis r7, 0x21 806C8734. Originally lis r7, 0x10. Related to memory allocated for the entire CSS.
 
-            writeAddr = 0x80693B10;
+            writeAddr = 0x80693B10; // Change copying to happen in the Fighter2Resource heap
             *(u32*)writeAddr = 0x38600013;
 
-            writeAddr = 0x80693B14;
+            writeAddr = 0x80693B14; // Increase buffer size for portraits
             *(u32*)writeAddr = 0x3c80000E;
         }
     }
