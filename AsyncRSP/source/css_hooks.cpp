@@ -212,6 +212,9 @@ namespace CSSHooks {
 
             writeAddr = 0x80693B10;
             *(u32*)writeAddr = 0x38600013;
+
+            writeAddr = 0x80693B14;
+            *(u32*)writeAddr = 0x3c80000E;
         }
     }
 
