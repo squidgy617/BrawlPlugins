@@ -212,10 +212,13 @@ namespace CSSHooks {
             // *(u32*)writeAddr = 0x3CE00021; //lis r7, 0x21 806C8734. Originally lis r7, 0x10. Related to memory allocated for the entire CSS.
 
             writeAddr = 0x80693B10; // Change copying to happen in the Fighter2Resource heap
-            *(u32*)writeAddr = 0x38600013;
+            *(u32*)writeAddr = 0x38600013; // 43 (MenuResource) -> 19 (Fighter2Resource)
 
             writeAddr = 0x80693B14; // Increase buffer size for portraits
-            *(u32*)writeAddr = 0x3c80000E;
+            *(u32*)writeAddr = 0x3c80000E; // lis r4, 4 -> lis r4, 14
+
+            writeAddr = 0x800E6068; // Change heap for RSP on result screen
+            *(u32*)writeAddr = 0x38a00011; // li r5, 42 (MenuInstance) -> li r5, 17 (StageResource)
         }
     }
 
