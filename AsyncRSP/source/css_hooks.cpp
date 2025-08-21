@@ -21,21 +21,21 @@ namespace CSSHooks {
     void createThreads(muSelCharPlayerArea* area)
     {
         Heaps::HeapType heap = Heaps::Fighter1Resource;
-        switch (area->m_areaIdx)
-        {
-            case 0:
-                heap = Heaps::Fighter1Resource;
-                break;
-            case 1:
-                heap = Heaps::Fighter2Resource;
-                break;
-            case 2:
-                heap = Heaps::Fighter3Resource;
-                break;
-            case 3:
-                heap = Heaps::Fighter4Resource;
-                break;
-        }
+        // switch (area->m_areaIdx)
+        // {
+        //     case 0:
+        //         heap = Heaps::Fighter1Resource;
+        //         break;
+        //     case 1:
+        //         heap = Heaps::Fighter2Resource;
+        //         break;
+        //     case 2:
+        //         heap = Heaps::Fighter3Resource;
+        //         break;
+        //     case 3:
+        //         heap = Heaps::Fighter4Resource;
+        //         break;
+        // }
         selCharLoadThread* thread = new (Heaps::Fighter1Resource) selCharLoadThread(area);
     }
 
