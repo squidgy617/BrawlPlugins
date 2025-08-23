@@ -57,9 +57,11 @@ namespace CSSHooks {
         {
             g_ftManager->removeSlot(2); // Clear slot 3 data out of Fighter3Resource
         }
+        // Set slot ID to -1 cause this is what the game does
         g_stLoaderManager->m_loaderPlayers[0]->m_slotId = -1;
         g_stLoaderManager->m_loaderPlayers[1]->m_slotId = -1;
         g_stLoaderManager->m_loaderPlayers[2]->m_slotId = -1;
+        // Set state to 0 to ensure pac files get loaded again
         g_stLoaderManager->m_loaderPlayers[0]->m_state = 0;
         g_stLoaderManager->m_loaderPlayers[1]->m_state = 0;
         g_stLoaderManager->m_loaderPlayers[2]->m_state = 0;
