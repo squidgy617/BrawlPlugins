@@ -43,28 +43,38 @@ namespace CSSHooks {
         selCharLoadThread* thread = new (heap) selCharLoadThread(area);
     }
 
+    // The intent of this function is to clear all of the FighterResource heaps used to store the RSPs before the async threads are spun up. However, if a fighter is in the process of loading, it does not work.
     void clearHeaps()
     {
-        if (g_stLoaderManager->m_loaderPlayers[0]->m_slotId != -1 && g_ftManager->isReadySlot(0))
+        if (g_stLoaderManager->m_loaderPlayers[0]->m_slotId != -1 && g_ftManager->isReadyRemoveSlot(0))
         {
             g_ftManager->removeSlot(0); // Clear slot 1 data out of Fighter1Resource
+            g_stLoaderManager->m_loaderPlayers[0]->m_slotId = -1;
+            g_stLoaderManager->m_loaderPlayers[0]->m_state = 0;
         }
-        if (g_stLoaderManager->m_loaderPlayers[0]->m_slotId != -1 && g_ftManager->isReadySlot(1))
+        if (g_stLoaderManager->m_loaderPlayers[1]->m_slotId != -1 && g_ftManager->isReadyRemoveSlot(1))
         {
             g_ftManager->removeSlot(1); // Clear slot 2 data out of Fighter2Resource
+            g_stLoaderManager->m_loaderPlayers[1]->m_slotId = -1;
+            g_stLoaderManager->m_loaderPlayers[1]->m_state = 0;
         }
-        if (g_stLoaderManager->m_loaderPlayers[0]->m_slotId != -1 && g_ftManager->isReadySlot(2))
+        if (g_stLoaderManager->m_loaderPlayers[2]->m_slotId != -1 && g_ftManager->isReadyRemoveSlot(2))
         {
             g_ftManager->removeSlot(2); // Clear slot 3 data out of Fighter3Resource
+            g_stLoaderManager->m_loaderPlayers[2]->m_slotId = -1;
+            g_stLoaderManager->m_loaderPlayers[2]->m_state = 0;
         }
-        // Set slot ID to -1 cause this is what the game does
-        g_stLoaderManager->m_loaderPlayers[0]->m_slotId = -1;
-        g_stLoaderManager->m_loaderPlayers[1]->m_slotId = -1;
-        g_stLoaderManager->m_loaderPlayers[2]->m_slotId = -1;
-        // Set state to 0 to ensure pac files get loaded again
-        g_stLoaderManager->m_loaderPlayers[0]->m_state = 0;
-        g_stLoaderManager->m_loaderPlayers[1]->m_state = 0;
-        g_stLoaderManager->m_loaderPlayers[2]->m_state = 0;
+        if (g_stLoaderManager->m_loaderPlayers[3]->m_slotId != -1 && g_ftManager->isReadyRemoveSlot(3))
+        {
+            g_ftManager->removeSlot(3); // Clear slot 4 data out of Fighter4Resource
+            g_stLoaderManager->m_loaderPlayers[3]->m_slotId = -1;
+            g_stLoaderManager->m_loaderPlayers[3]->m_state = 0;
+        }
+        // State 5 seems to start the process of unloading a fighter, but it is not completed before we arrive at CSS
+        // g_stLoaderManager->m_loaderPlayers[0]->m_state = 5;
+        // g_stLoaderManager->m_loaderPlayers[1]->m_state = 5;
+        // g_stLoaderManager->m_loaderPlayers[2]->m_state = 5;
+        // g_stLoaderManager->m_loaderPlayers[3]->m_state = 5;
     }
 
     // NOTE: This hook gets triggered again by the load thread since
@@ -271,7 +281,7 @@ namespace CSSHooks {
 
 
         // hook to clear heaps before creating threads
-        api->syInlineHookRel(0x351C, reinterpret_cast<void*>(clearHeaps), Modules::SORA_MENU_SEL_CHAR);
+        api->syInlineHookRel(0xD54, reinterpret_cast<void*>(clearHeaps), Modules::SORA_MENU_SEL_CHAR);
 
         // hook to create threads when booting the CSS
         api->syInlineHookRel(0x3524, reinterpret_cast<void*>(createThreads), Modules::SORA_MENU_SEL_CHAR);
