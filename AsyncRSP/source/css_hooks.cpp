@@ -11,6 +11,10 @@
 #include <types.h>
 #include <vector.h>
 #include "css_hooks.h"
+#include <ft/ft_manager.h>
+#include <gf/gf_heap_manager.h>
+#include <st/loader/st_loader_manager.h>
+#include <st/loader/st_loader_player.h>
 
 using namespace nw4r::g3d;
 
@@ -37,6 +41,28 @@ namespace CSSHooks {
         //         break;
         // }
         selCharLoadThread* thread = new (heap) selCharLoadThread(area);
+    }
+
+    void clearHeaps()
+    {
+        if (g_stLoaderManager->m_loaderPlayers[0]->m_slotId != -1 && g_ftManager->isReadySlot(0))
+        {
+            g_ftManager->removeSlot(0); // Clear slot 1 data out of Fighter1Resource
+        }
+        if (g_stLoaderManager->m_loaderPlayers[0]->m_slotId != -1 && g_ftManager->isReadySlot(1))
+        {
+            g_ftManager->removeSlot(1); // Clear slot 2 data out of Fighter2Resource
+        }
+        if (g_stLoaderManager->m_loaderPlayers[0]->m_slotId != -1 && g_ftManager->isReadySlot(2))
+        {
+            g_ftManager->removeSlot(2); // Clear slot 3 data out of Fighter3Resource
+        }
+        g_stLoaderManager->m_loaderPlayers[0]->m_slotId = -1;
+        g_stLoaderManager->m_loaderPlayers[1]->m_slotId = -1;
+        g_stLoaderManager->m_loaderPlayers[2]->m_slotId = -1;
+        g_stLoaderManager->m_loaderPlayers[0]->m_state = 0;
+        g_stLoaderManager->m_loaderPlayers[1]->m_state = 0;
+        g_stLoaderManager->m_loaderPlayers[2]->m_state = 0;
     }
 
     // NOTE: This hook gets triggered again by the load thread since
@@ -241,6 +267,9 @@ namespace CSSHooks {
                               (void**)&_loadCharPic,
                               Modules::SORA_MENU_SEL_CHAR);
 
+
+        // hook to clear heaps before creating threads
+        api->syInlineHookRel(0x351C, reinterpret_cast<void*>(clearHeaps), Modules::SORA_MENU_SEL_CHAR);
 
         // hook to create threads when booting the CSS
         api->syInlineHookRel(0x3524, reinterpret_cast<void*>(createThreads), Modules::SORA_MENU_SEL_CHAR);
