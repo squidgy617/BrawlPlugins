@@ -5,4 +5,6 @@
 class CoreApi;
 namespace CSSHooks {
     void InstallHooks(CoreApi* api);
+    bool isLoaded(u32 resLoader);
+    void _returnAddr();
 } // namespace CSSHooks
