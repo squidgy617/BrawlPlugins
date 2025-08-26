@@ -7,4 +7,5 @@ namespace CSSHooks {
     void InstallHooks(CoreApi* api);
     bool isLoaded(u32 resLoader);
     void _returnAddr();
+    void _placeholderTextureReturn();
 } // namespace CSSHooks

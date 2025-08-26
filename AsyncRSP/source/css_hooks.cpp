@@ -95,6 +95,35 @@ namespace CSSHooks {
         b _returnAddr;
     }
 
+    void setPlaceholderTexture(int* id1, int* id2)
+    {
+        register ResFile* resFile;
+
+        asm
+        {
+            mr resFile, r26;
+        }
+
+        if (resFile->GetResTex("MenSelchrFaceB.501") != 0)
+        {
+            *id1 = 0;
+            *id2 = 501;
+        }
+    }
+
+    asm void __setPlaceholderTexture() {
+        nofralloc
+        mr r26, r3      // original instruction
+        addi r3, r1, 0x48
+        addi r4, r1, 0x4C
+        stw r24, 0x48 (r1)
+        stw r25, 0x4C (r1)
+        bl setPlaceholderTexture
+        lwz r24, 0x48(r1)
+        lwz r25, 0x4C(r1)
+        b _placeholderTextureReturn
+    }
+
     // NOTE: This hook gets triggered again by the load thread since
     // the thread calls `setCharPic` when data is finished loading
     ResFile* getCharPicTexResFile(register muSelCharPlayerArea* area, u32 charKind)
@@ -309,6 +338,9 @@ namespace CSSHooks {
 
         // hook to create threads when booting the CSS
         api->syInlineHookRel(0x3524, reinterpret_cast<void*>(createThreads), Modules::SORA_MENU_SEL_CHAR);
+
+        // hook to load placeholder CSP if there is one
+        api->sySimpleHookRel(0x14CE4, reinterpret_cast<void*>(__setPlaceholderTexture), Modules::SORA_MENU_SEL_CHAR);
 
         // hook to clear CSPs when no fighter is selected
         api->syInlineHookRel(0x14BC8, reinterpret_cast<void*>(leavingSlot), Modules::SORA_MENU_SEL_CHAR);
