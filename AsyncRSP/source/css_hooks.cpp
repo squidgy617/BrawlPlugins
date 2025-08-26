@@ -137,7 +137,7 @@ namespace CSSHooks {
         // check if CSP exists in archive first.
         void* data = selCharArchive->getData(Data_Type_Misc, id, 0xfffe);
         if (data == NULL) {
-            data = selCharArchive->getData(Data_Type_Misc, 0, 0xfffe);
+            data = selCharArchive->getData(Data_Type_Misc, 50, 0xfffe);
         }
         // If CSP is in archive mark as loaded
         else {
