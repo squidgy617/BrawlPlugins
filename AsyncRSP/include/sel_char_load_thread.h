@@ -15,6 +15,7 @@ protected:
     void* m_buffers[2];
     int m_inactiveBuffer;
     int m_activeBuffer;
+    void* m_fileBuffer;
     int m_toLoad;
     int m_loaded;
     bool m_dataReady;
@@ -31,7 +32,8 @@ public:
     void suspend();
     void resume();
     void reset();
-    void* getBuffer() { return m_buffers[m_activeBuffer]; }
+    void* getActiveBuffer() { return m_buffers[m_activeBuffer]; }
+    void* getFileBuffer() { return m_fileBuffer; }
     bool isRunning() { return m_isRunning; }
     bool isReady() { return m_dataReady; }
     void setCharPic();

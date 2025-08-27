@@ -28,7 +28,8 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_activeBuffer = 0;
     m_inactiveBuffer = 1;
 
-    m_buffers[m_activeBuffer] = gfHeapManager::alloc(Heaps::Fighter3Resource, 0xE0000);
+    m_fileBuffer = gfHeapManager::alloc(Heaps::Fighter3Resource, 0xE0000);
+    m_buffers[m_activeBuffer] = area->m_charPicData;
     m_buffers[m_inactiveBuffer] = gfHeapManager::alloc(Heaps::Fighter4Resource, 0xE0000);
     s_threads[area->m_areaIdx] = this;
 }
@@ -38,7 +39,7 @@ bool selCharLoadThread::findAndCopyThreadWithPortraitAlreadyLoaded(u8 selchKind)
         if (this->getAreaIdx() != i) {
             if (s_threads[i] != nullptr &&
                 s_threads[i]->isTargetPortraitReady(selchKind)) {
-                this->setData(s_threads[i]->getBuffer());
+                this->setData(s_threads[i]->getFileBuffer());
                 return true;
             }
         }
@@ -122,7 +123,7 @@ void selCharLoadThread::main()
                 sprintf(filepath, format, id);
 
                 // Start the read process
-                this->m_handle.readRequest(filepath, this->getBuffer(), 0, 0);
+                this->m_handle.readRequest(filepath, this->getFileBuffer(), 0, 0);
             }
 
 
@@ -164,7 +165,7 @@ bool selCharLoadThread::isTargetPortraitReady(u8 selchKind) {
 }
 
 void selCharLoadThread::setData(void* copy) {
-    memcpy(this->getBuffer(), copy, 0xE0000);
+    memcpy(this->getFileBuffer(), copy, 0xE0000);
 }
 
 selCharLoadThread::~selCharLoadThread()

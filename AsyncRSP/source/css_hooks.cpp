@@ -155,12 +155,13 @@ namespace CSSHooks {
             thread->imageLoaded();
         }
         if (!thread->isReady()) {
-            CXUncompressLZ(data, area->m_charPicData);
+            void* activeBuffer = thread->getActiveBuffer();
+            CXUncompressLZ(data, activeBuffer);
             // flush cache
-            DCFlushRange(area->m_charPicData, 0xE0000);
+            DCFlushRange(activeBuffer, 0xE0000);
 
             // set ResFile to point to filedata
-            area->m_charPicRes = ResFile(area->m_charPicData);
+            area->m_charPicRes = ResFile(activeBuffer);
 
             // init resFile and return
             ResFile::Init(&area->m_charPicRes);
@@ -171,14 +172,15 @@ namespace CSSHooks {
         }
         else {
             // if the CSP data is in the archive, load the data from there
-            void* buffer = thread->getBuffer();
+            void* fileBuffer = thread->getFileBuffer();
+            void* activeBuffer = thread->getActiveBuffer();
             // copy data from temp load buffer
-            memcpy(area->m_charPicData, buffer, 0xE0000);
+            memcpy(activeBuffer, fileBuffer, 0xE0000);
 
-            DCFlushRange(area->m_charPicData, 0xE0000);
+            DCFlushRange(activeBuffer, 0xE0000);
 
             // set ResFile to point to filedata
-            area->m_charPicRes = ResFile(area->m_charPicData);
+            area->m_charPicRes = ResFile(activeBuffer);
 
             // init resFile and return
             ResFile::Init(&area->m_charPicRes);
