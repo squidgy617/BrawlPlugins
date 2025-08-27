@@ -165,11 +165,13 @@ namespace CSSHooks {
             // init resFile and return
             ResFile::Init(&area->m_charPicRes);
 
+            thread->swapBuffers();
+
             return &area->m_charPicRes;
         }
         else {
             // if the CSP data is in the archive, load the data from there
-            void* buffer = thread->getWriteBuffer();
+            void* buffer = thread->getBuffer();
             // copy data from temp load buffer
             memcpy(area->m_charPicData, buffer, 0xE0000);
 
@@ -180,6 +182,8 @@ namespace CSSHooks {
 
             // init resFile and return
             ResFile::Init(&area->m_charPicRes);
+
+            thread->swapBuffers();
 
             return &area->m_charPicRes;
         }
