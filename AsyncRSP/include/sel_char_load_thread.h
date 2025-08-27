@@ -12,7 +12,9 @@ protected:
 
     gfFileIOHandle m_handle;
     muSelCharPlayerArea* m_playerArea;
-    void* m_buffer;
+    void* m_buffers[2];
+    int m_writeBuffer;
+    int m_readBuffer;
     int m_toLoad;
     int m_loaded;
     bool m_dataReady;
@@ -29,7 +31,8 @@ public:
     void suspend();
     void resume();
     void reset();
-    void* getBuffer() { return m_buffer; }
+    void* getBuffer() { return m_buffers[m_readBuffer]; }
+    void* getWriteBuffer() { return m_buffers[m_writeBuffer]; }
     bool isRunning() { return m_isRunning; }
     bool isReady() { return m_dataReady; }
     void setCharPic();
@@ -45,6 +48,7 @@ public:
     bool updateName() { return m_updateName; }
     void emblemUpdated() { m_updateEmblem = false; }
     void nameUpdated() { m_updateName = false; }
+    void swapBuffers() { int holdBuffer = m_readBuffer; m_readBuffer = m_writeBuffer; m_writeBuffer = holdBuffer; }
 
     static bool isExcludedSelchKind(u8 selchKind);
     static bool isNoLoadSelchKind(u8 selchKind);

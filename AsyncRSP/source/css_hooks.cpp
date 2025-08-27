@@ -169,7 +169,7 @@ namespace CSSHooks {
         }
         else {
             // if the CSP data is in the archive, load the data from there
-            void* buffer = thread->getBuffer();
+            void* buffer = thread->getWriteBuffer();
             // copy data from temp load buffer
             memcpy(area->m_charPicData, buffer, 0xE0000);
 
@@ -340,7 +340,7 @@ namespace CSSHooks {
         api->syInlineHookRel(0x3524, reinterpret_cast<void*>(createThreads), Modules::SORA_MENU_SEL_CHAR);
 
         // hook to load placeholder CSP if there is one
-        api->sySimpleHookRel(0x14CE4, reinterpret_cast<void*>(__setPlaceholderTexture), Modules::SORA_MENU_SEL_CHAR);
+        // api->sySimpleHookRel(0x14CE4, reinterpret_cast<void*>(__setPlaceholderTexture), Modules::SORA_MENU_SEL_CHAR);
 
         // hook to clear CSPs when no fighter is selected
         api->syInlineHookRel(0x14BC8, reinterpret_cast<void*>(leavingSlot), Modules::SORA_MENU_SEL_CHAR);

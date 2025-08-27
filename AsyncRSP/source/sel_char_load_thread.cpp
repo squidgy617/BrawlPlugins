@@ -25,8 +25,11 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_updateEmblem = false;
     m_updateName = false;
     m_lastSelectedCharKind = -1;
+    m_readBuffer = 0;
+    m_writeBuffer = 1;
 
-    m_buffer = gfHeapManager::alloc(Heaps::Fighter3Resource, 0xE0000);
+    m_buffers[m_readBuffer] = gfHeapManager::alloc(Heaps::Fighter3Resource, 0xE0000);
+    m_buffers[m_writeBuffer] = gfHeapManager::alloc(Heaps::Fighter4Resource, 0xE0000);
     s_threads[area->m_areaIdx] = this;
 }
 
@@ -119,7 +122,8 @@ void selCharLoadThread::main()
                 sprintf(filepath, format, id);
 
                 // Start the read process
-                this->m_handle.readRequest(filepath, this->m_buffer, 0, 0);
+                this->m_handle.readRequest(filepath, this->getBuffer(), 0, 0);
+                swapBuffers();
             }
 
 
@@ -161,12 +165,13 @@ bool selCharLoadThread::isTargetPortraitReady(u8 selchKind) {
 }
 
 void selCharLoadThread::setData(void* copy) {
-    memcpy(this->m_buffer, copy, 0xE0000);
+    memcpy(this->getBuffer(), copy, 0xE0000);
 }
 
 selCharLoadThread::~selCharLoadThread()
 {
-    free(m_buffer);
+    free(getBuffer());
+    free(getWriteBuffer());
     m_handle.release();
     s_threads[this->getAreaIdx()] = NULL;
 }
