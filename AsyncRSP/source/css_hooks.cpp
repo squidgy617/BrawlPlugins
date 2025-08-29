@@ -17,6 +17,17 @@
 #include <st/loader/st_loader_player.h>
 #include <gm/gm_global.h>
 
+// #define MEMORY_EXPANSION
+// #define DEBUG
+
+#ifdef MEMORY_EXPANSION
+Heaps::HeapType fileHeap = Heaps::Fighter1Resource;
+u32 bufferSize = 0xE0000;
+#else
+Heaps::HeapType fileHeap = Heaps::MenuResource;
+u32 bufferSize = 0x40000;
+#endif
+
 using namespace nw4r::g3d;
 
 namespace CSSHooks {
@@ -25,22 +36,7 @@ namespace CSSHooks {
 
     void createThreads(muSelCharPlayerArea* area)
     {
-        Heaps::HeapType heap = Heaps::Fighter1Resource;
-        // switch (area->m_areaIdx)
-        // {
-        //     case 0:
-        //         heap = Heaps::Fighter1Resource;
-        //         break;
-        //     case 1:
-        //         heap = Heaps::Fighter2Resource;
-        //         break;
-        //     case 2:
-        //         heap = Heaps::Fighter3Resource;
-        //         break;
-        //     case 3:
-        //         heap = Heaps::Fighter4Resource;
-        //         break;
-        // }
+        Heaps::HeapType heap = fileHeap;
         selCharLoadThread* thread = new (heap) selCharLoadThread(area);
     }
 
@@ -203,18 +199,16 @@ namespace CSSHooks {
             thread->imageLoaded();
         }
         if (!thread->isReady()) {
-            void* activeBuffer = thread->getActiveBuffer();
+            void* activeBuffer = area->m_charPicData;
             CXUncompressLZ(data, activeBuffer);
             // flush cache
-            DCFlushRange(activeBuffer, 0xE0000);
+            DCFlushRange(activeBuffer, bufferSize);
 
             // set ResFile to point to filedata
             area->m_charPicRes = ResFile(activeBuffer);
 
             // init resFile and return
             ResFile::Init(&area->m_charPicRes);
-
-            thread->swapBuffers();
 
             return &area->m_charPicRes;
         }
@@ -223,17 +217,15 @@ namespace CSSHooks {
             void* fileBuffer = thread->getFileBuffer();
             void* activeBuffer = thread->getActiveBuffer();
             // copy data from temp load buffer
-            memcpy(activeBuffer, fileBuffer, 0xE0000);
+            memcpy(activeBuffer, fileBuffer, bufferSize);
 
-            DCFlushRange(activeBuffer, 0xE0000);
+            DCFlushRange(activeBuffer, bufferSize);
 
             // set ResFile to point to filedata
             area->m_charPicRes = ResFile(activeBuffer);
 
             // init resFile and return
             ResFile::Init(&area->m_charPicRes);
-
-            thread->swapBuffers();
 
             return &area->m_charPicRes;
         }
@@ -346,10 +338,7 @@ namespace CSSHooks {
 
         if (moduleID == Modules::SORA_MENU_SEL_CHAR)
         {  
-            // No longer needed since we're using the FighterResource heaps for the portraits?
-            // writeAddr = 0x806C8734; //Yeah I didn't bother to do anything fancy here since it is in a different module
-            // *(u32*)writeAddr = 0x3CE00021; //lis r7, 0x21 806C8734. Originally lis r7, 0x10. Related to memory allocated for the entire CSS.
-
+            #ifdef MEMORY_EXPANSION
             writeAddr = 0x80693B10; // Change copying to happen in the Fighter2Resource heap
             *(u32*)writeAddr = 0x38600013; // 43 (MenuResource) -> 19 (Fighter2Resource)
 
@@ -358,6 +347,10 @@ namespace CSSHooks {
 
             writeAddr = 0x800E6068; // Change heap for RSP on result screen
             *(u32*)writeAddr = 0x38a00011; // li r5, 42 (MenuInstance) -> li r5, 17 (StageResource)
+            #else
+            writeAddr = 0x806C8734; //Yeah I didn't bother to do anything fancy here since it is in a different module
+            *(u32*)writeAddr = 0x3CE00021; //lis r7, 0x21 806C8734. Originally lis r7, 0x10. Related to memory allocated for the entire CSS.
+            #endif
         }
     }
 
@@ -380,6 +373,7 @@ namespace CSSHooks {
                               (void**)&_loadCharPic,
                               Modules::SORA_MENU_SEL_CHAR);
 
+        #ifdef MEMORY_EXPANSION
         // hook to start deallocating PACs when we leave SSS
         api->syInlineHookRel(0xD0BC,
                             reinterpret_cast<void*>(deallocatePacs),
@@ -389,6 +383,7 @@ namespace CSSHooks {
         api->sySimpleHookRel(0xD264,
                             reinterpret_cast<void*>(__hookWrapper),
                             Modules::SORA_SCENE);
+        #endif
 
         // hook to create threads when booting the CSS
         api->syInlineHookRel(0x3524, reinterpret_cast<void*>(createThreads), Modules::SORA_MENU_SEL_CHAR);
@@ -417,8 +412,10 @@ namespace CSSHooks {
                             reinterpret_cast<void*>(clearFranchiseIcons),
                             Modules::SORA_MENU_SEL_CHAR);
 
+        #ifdef DEBUG
         // hook to log information about the portraits while they load
         api->sySimpleHookRel(0x00014CFC, reinterpret_cast<void*>(__logStuff), Modules::SORA_MENU_SEL_CHAR);
+        #endif
 
     }
 } // namespace CSSHooks
