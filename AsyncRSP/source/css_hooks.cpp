@@ -136,16 +136,16 @@ namespace CSSHooks {
             mr resFile, r26;
         }
 
-        return resFile->GetResTex("MenSelchrFaceB.501");
+        return resFile->GetResTex("MenSelchrFaceB.501").ptr() != 0;
     }
 
     asm void __setPlaceholderTexture() {
         nofralloc
         mr r26, r3      // original instruction
         bl setPlaceholderTexture
-        cmpwi r3, 0
+        cmpwi r3, 0     // if we found our placeholder texture, skip rendering portrait
         bne skip
-        b _placeholderTextureReturn
+        b _placeholderTextureReturn     // otherwise, return and render portrait
         skip:
         b _placeholderTextureSkip
     }
