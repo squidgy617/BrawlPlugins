@@ -139,8 +139,6 @@ void selCharLoadThread::requestLoad(int charKind)
     }
     else {
         m_toLoad = charKind;
-        m_updateEmblem = false;
-        m_updateName = false;
     }
     m_lastSelectedCharKind = charKind;
     m_dataReady = false;
