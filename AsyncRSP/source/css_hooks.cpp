@@ -15,6 +15,7 @@
 #include <gf/gf_heap_manager.h>
 #include <st/loader/st_loader_manager.h>
 #include <st/loader/st_loader_player.h>
+#include <gm/gm_global.h>
 
 using namespace nw4r::g3d;
 
@@ -95,7 +96,38 @@ namespace CSSHooks {
         b _returnAddr;
     }
 
-    void setPlaceholderTexture(int* id1, int* id2)
+    // These functions force a blank texture while the file loads - commented out to allow the previous portrait to continue display during load instead
+    // void setPlaceholderTexture(int* id1, int* id2)
+    // {
+    //     register ResFile* resFile;
+
+    //     asm
+    //     {
+    //         mr resFile, r26;
+    //     }
+
+    //     if (resFile->GetResTex("MenSelchrFaceB.501") != 0)
+    //     {
+    //         *id1 = 0;
+    //         *id2 = 501;
+    //     }
+    // }
+
+    // asm void __setPlaceholderTexture() {
+    //     nofralloc
+    //     mr r26, r3      // original instruction
+    //     addi r3, r1, 0x48
+    //     addi r4, r1, 0x4C
+    //     stw r24, 0x48 (r1)
+    //     stw r25, 0x4C (r1)
+    //     bl setPlaceholderTexture
+    //     lwz r24, 0x48(r1)
+    //     lwz r25, 0x4C(r1)
+    //     b _placeholderTextureReturn
+    // }
+
+    // These functions skip changing the portrait if a placeholder texture is found
+    bool setPlaceholderTexture()
     {
         register ResFile* resFile;
 
@@ -104,24 +136,40 @@ namespace CSSHooks {
             mr resFile, r26;
         }
 
-        if (resFile->GetResTex("MenSelchrFaceB.501") != 0)
-        {
-            *id1 = 0;
-            *id2 = 501;
-        }
+        return resFile->GetResTex("MenSelchrFaceB.501");
     }
 
     asm void __setPlaceholderTexture() {
         nofralloc
         mr r26, r3      // original instruction
-        addi r3, r1, 0x48
-        addi r4, r1, 0x4C
-        stw r24, 0x48 (r1)
-        stw r25, 0x4C (r1)
         bl setPlaceholderTexture
-        lwz r24, 0x48(r1)
-        lwz r25, 0x4C(r1)
+        cmpwi r3, 0
+        bne skip
         b _placeholderTextureReturn
+        skip:
+        b _placeholderTextureSkip
+    }
+
+    // These functions log information about portrait changes for debug purposes
+    void logStuff(char* stringPtr)
+    {
+        register int param_1;
+
+        asm
+        {
+            mr param_1, r31;
+        }
+
+        OSReport("Param 1: %d - String: %s - Frame: %f \n", param_1, stringPtr, g_GameGlobal->getGameFrame());
+    }
+
+    asm void __logStuff()
+    {
+        nofralloc
+        addi r3, r1, 0x8
+        bl logStuff
+        addi r4,r29,0x374 // original instruction
+        b _logStuffReturn
     }
 
     // NOTE: This hook gets triggered again by the load thread since
@@ -346,7 +394,7 @@ namespace CSSHooks {
         api->syInlineHookRel(0x3524, reinterpret_cast<void*>(createThreads), Modules::SORA_MENU_SEL_CHAR);
 
         // hook to load placeholder CSP if there is one
-        // api->sySimpleHookRel(0x14CE4, reinterpret_cast<void*>(__setPlaceholderTexture), Modules::SORA_MENU_SEL_CHAR);
+        api->sySimpleHookRel(0x14CE4, reinterpret_cast<void*>(__setPlaceholderTexture), Modules::SORA_MENU_SEL_CHAR);
 
         // hook to clear CSPs when no fighter is selected
         api->syInlineHookRel(0x14BC8, reinterpret_cast<void*>(leavingSlot), Modules::SORA_MENU_SEL_CHAR);
@@ -368,6 +416,9 @@ namespace CSSHooks {
         api->sySimpleHookRel(0x00014810,
                             reinterpret_cast<void*>(clearFranchiseIcons),
                             Modules::SORA_MENU_SEL_CHAR);
+
+        // hook to log information about the portraits while they load
+        api->sySimpleHookRel(0x00014CFC, reinterpret_cast<void*>(__logStuff), Modules::SORA_MENU_SEL_CHAR);
 
     }
 } // namespace CSSHooks

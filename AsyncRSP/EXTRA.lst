@@ -4,5 +4,8 @@
 806bf3a4:isLoaded__8CSSHooksFUl
 806c87bc:_returnAddr__8CSSHooksFv
 10,1,00014CE8:_placeholderTextureReturn__8CSSHooksFv
+8004e894:getGameFrame__10GameGlobalCFv
+10,1,00014D00:_logStuffReturn__8CSSHooksFv
+10,1,00014D98:_placeholderTextureSkip__8CSSHooksFv
 
 10,6,00000008:selCharArchive__8CSSHooks

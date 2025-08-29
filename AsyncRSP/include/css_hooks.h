@@ -8,4 +8,6 @@ namespace CSSHooks {
     bool isLoaded(u32 resLoader);
     void _returnAddr();
     void _placeholderTextureReturn();
+    void _placeholderTextureSkip();
+    void _logStuffReturn();
 } // namespace CSSHooks
