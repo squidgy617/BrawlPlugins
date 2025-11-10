@@ -33,8 +33,8 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_playerArea = area;
     m_dataReady = false;
     m_isRunning = false;
-    m_updateEmblem = false;
-    m_updateName = false;
+    m_shouldUpdateEmblem = false;
+    m_shouldUpdateName = false;
     m_lastSelectedCharKind = -1;
 
     m_fileBuffer = gfHeapManager::alloc(threadBufferHeap, threadBufferSize);
@@ -140,7 +140,7 @@ void selCharLoadThread::main()
 }
 
 
-void selCharLoadThread::requestLoad(int charKind)
+void selCharLoadThread::requestLoad(int charKind, bool hasCsp)
 {
     if (isNoLoadSelchKind(charKind)) {
         m_toLoad = -1;
@@ -161,8 +161,8 @@ void selCharLoadThread::reset()
 //    }
 
     m_dataReady = false;
-    m_updateEmblem = false;
-    m_updateName = false;
+    m_shouldUpdateEmblem = false;
+    m_shouldUpdateName = false;
     m_toLoad = -1;
 }
 
