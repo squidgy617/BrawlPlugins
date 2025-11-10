@@ -5,4 +5,9 @@
 class CoreApi;
 namespace CSSHooks {
     void InstallHooks(CoreApi* api);
+    bool isLoaded(u32 resLoader);
+    void _returnAddr();
+    void _placeholderTextureReturn();
+    void _placeholderTextureSkip();
+    void _logStuffReturn();
 } // namespace CSSHooks

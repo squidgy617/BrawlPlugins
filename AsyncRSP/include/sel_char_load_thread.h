@@ -13,6 +13,7 @@ protected:
     gfFileIOHandle m_handle;
     muSelCharPlayerArea* m_playerArea;
     void* m_buffer;
+    void* m_fileBuffer;
     int m_toLoad;
     int m_loaded;
     bool m_dataReady;
@@ -29,7 +30,8 @@ public:
     void suspend();
     void resume();
     void reset();
-    void* getBuffer() { return m_buffer; }
+    void* getActiveBuffer() { return m_buffer; }
+    void* getFileBuffer() { return m_fileBuffer; }
     bool isRunning() { return m_isRunning; }
     bool isReady() { return m_dataReady; }
     void setCharPic();

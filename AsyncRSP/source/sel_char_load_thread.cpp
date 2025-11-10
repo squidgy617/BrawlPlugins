@@ -8,6 +8,17 @@
 #include <mu/menu.h>
 #include <cstdio>
 
+// #define MEMORY_EXPANSION
+// #define DEBUG
+
+#ifdef MEMORY_EXPANSION
+Heaps::HeapType threadBufferHeap = Heaps::Fighter3Resource;
+u32 threadBufferSize = 0xE0000;
+#else
+Heaps::HeapType threadBufferHeap = Heaps::MenuResource;
+u32 threadBufferSize = 0x40000;
+#endif
+
 const u8 excludedSelchKinds[] = {0x29, 0x38, 0x39, 0x3A, 0x3B};
 const u8 excludedSelchKindLength = sizeof(excludedSelchKinds) / sizeof(excludedSelchKinds[0]);
 const u8 noLoadSelchKinds[] = {0x28, 0x29};
@@ -26,15 +37,17 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_updateName = false;
     m_lastSelectedCharKind = -1;
 
-    m_buffer = gfHeapManager::alloc(Heaps::MenuResource, 0x40000);
+    m_fileBuffer = gfHeapManager::alloc(threadBufferHeap, threadBufferSize);
+    m_buffer = area->m_charPicData;
     s_threads[area->m_areaIdx] = this;
 }
 
 bool selCharLoadThread::findAndCopyThreadWithPortraitAlreadyLoaded(u8 selchKind) {
     for (u8 i = 0; i < muSelCharTask::num_player_areas; i++) {
         if (this->getAreaIdx() != i) {
-            if (s_threads[i]->isTargetPortraitReady(selchKind)) {
-                this->setData(s_threads[i]->getBuffer());
+            if (s_threads[i] != nullptr &&
+                s_threads[i]->isTargetPortraitReady(selchKind)) {
+                this->setData(s_threads[i]->getFileBuffer());
                 return true;
             }
         }
@@ -118,7 +131,7 @@ void selCharLoadThread::main()
                 sprintf(filepath, format, id);
 
                 // Start the read process
-                this->m_handle.readRequest(filepath, this->m_buffer, 0, 0);
+                this->m_handle.readRequest(filepath, this->getFileBuffer(), 0, 0);
             }
 
 
@@ -134,8 +147,6 @@ void selCharLoadThread::requestLoad(int charKind)
     }
     else {
         m_toLoad = charKind;
-        m_updateEmblem = false;
-        m_updateName = false;
     }
     m_lastSelectedCharKind = charKind;
     m_dataReady = false;
@@ -160,12 +171,12 @@ bool selCharLoadThread::isTargetPortraitReady(u8 selchKind) {
 }
 
 void selCharLoadThread::setData(void* copy) {
-    memcpy(this->m_buffer, copy, 0x40000);
+    memcpy(this->getFileBuffer(), copy, threadBufferSize);
 }
 
 selCharLoadThread::~selCharLoadThread()
 {
-    free(m_buffer);
+    free(m_fileBuffer);
     m_handle.release();
     s_threads[this->getAreaIdx()] = NULL;
 }
