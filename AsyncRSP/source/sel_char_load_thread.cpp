@@ -76,7 +76,6 @@ void selCharLoadThread::main()
         if (!isNoLoadSelchKind(area->m_charKind) && this->m_toLoad == -1)
         {
             this->m_dataReady = true;
-            this->imageLoaded();
             area->setCharPic(this->m_loaded,
                              area->m_playerKind,
                              area->m_charColorNo,
@@ -86,7 +85,6 @@ void selCharLoadThread::main()
         }
         else if (isNoLoadSelchKind(area->m_charKind)) {
             this->m_dataReady = true;
-            imageLoaded();
             area->setCharPic(area->m_charKind,
                              area->m_playerKind,
                              area->m_charColorNo,
@@ -110,7 +108,6 @@ void selCharLoadThread::main()
             this->m_toLoad = -1;
             if (this->findAndCopyThreadWithPortraitAlreadyLoaded(this->m_loaded)) {
                 this->m_dataReady = true;
-                this->imageLoaded();
                 area->setCharPic(this->m_loaded,
                                  area->m_playerKind,
                                  area->m_charColorNo,

@@ -228,6 +228,9 @@ namespace CSSHooks {
             // init resFile and return
             ResFile::Init(&area->m_charPicRes);
 
+            // Mark image as loaded
+            thread->imageLoaded();
+
             return &area->m_charPicRes;
         }
     }
