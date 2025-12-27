@@ -200,7 +200,7 @@ namespace CSSHooks {
             thread->imageLoaded();
         }
         if (!thread->isReady()) {
-            void* activeBuffer = area->m_charPicData;
+            void* activeBuffer = thread->getActiveBuffer();
             CXUncompressLZ(data, activeBuffer);
             // flush cache
             DCFlushRange(activeBuffer, bufferSize);
@@ -227,6 +227,8 @@ namespace CSSHooks {
 
             // init resFile and return
             ResFile::Init(&area->m_charPicRes);
+
+            thread->swapBuffers();
 
             // Mark image as loaded
             thread->imageLoaded();

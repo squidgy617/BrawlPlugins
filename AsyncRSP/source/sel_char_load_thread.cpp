@@ -13,9 +13,11 @@
 
 #ifdef MEMORY_EXPANSION
 Heaps::HeapType threadBufferHeap = Heaps::Fighter3Resource;
+Heaps::HeapType inactiveBufferHeap = Heaps::Fighter4Resource;
 u32 threadBufferSize = 0xE0000;
 #else
 Heaps::HeapType threadBufferHeap = Heaps::MenuResource;
+Heaps::HeapType inactiveBufferHeap = Heaps::MenuResource;
 u32 threadBufferSize = 0x40000;
 #endif
 
@@ -38,7 +40,8 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_lastSelectedCharKind = -1;
 
     m_fileBuffer = gfHeapManager::alloc(threadBufferHeap, threadBufferSize);
-    m_buffer = area->m_charPicData;
+    m_buffers[m_activeBuffer] = area->m_charPicData;
+    m_buffers[m_inactiveBuffer] = gfHeapManager::alloc(inactiveBufferHeap, threadBufferSize);
     s_threads[area->m_areaIdx] = this;
 }
 
@@ -178,6 +181,8 @@ void selCharLoadThread::setData(void* copy) {
 selCharLoadThread::~selCharLoadThread()
 {
     free(m_fileBuffer);
+    free(m_buffers[m_activeBuffer]);
+    free(m_buffers[m_inactiveBuffer]);
     m_handle.release();
     s_threads[this->getAreaIdx()] = NULL;
 }
