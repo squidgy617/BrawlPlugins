@@ -2,6 +2,7 @@
 #include <OS/OSCache.h>
 #include <os/OSError.h>
 #include <VI/vi.h>
+#include <nw4r/g3d/g3d_resfile.h>
 #include <gf/gf_heap_manager.h>
 #include <gf/gf_file_io_manager.h>
 #include <memory.h>
@@ -40,6 +41,7 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_lastSelectedCharKind = -1;
     m_activeBuffer = 0;
     m_inactiveBuffer = 1;
+    m_readyToDisplay = false;
 
     m_fileBuffer = gfHeapManager::alloc(threadBufferHeap, threadBufferSize);
     m_buffers[m_activeBuffer] = area->m_charPicData;
@@ -138,6 +140,16 @@ void selCharLoadThread::main()
 
 
         }
+    }
+
+    // If thread is ready to display image (after 1 frame delay), init resfile
+    if (this->isReadyToDisplay())
+    {
+        // init resFile
+        nw4r::g3d::ResFile::Init(&area->m_charPicRes);
+
+        // Mark image as displayed
+        this->imageDisplayed();
     }
 }
 

@@ -18,6 +18,7 @@ protected:
     void* m_fileBuffer;
     int m_toLoad;
     int m_loaded;
+    bool m_readyToDisplay;
     bool m_dataReady;
     bool m_isRunning;
     bool m_shouldUpdateEmblem;
@@ -37,6 +38,8 @@ public:
     void* getFileBuffer() { return m_fileBuffer; }
     bool isRunning() { return m_isRunning; }
     bool isReady() { return m_dataReady; }
+    void imageDisplayed() { m_readyToDisplay = false; }
+    bool isReadyToDisplay() { return m_readyToDisplay; }
     void setCharPic();
     int getAreaIdx() { return m_playerArea->m_areaIdx; }
     int getToLoadCharKind() { return m_toLoad; }
@@ -45,7 +48,7 @@ public:
     bool findAndCopyThreadWithPortraitAlreadyLoaded(u8 selchKind);
     void setData(void* m_copy);
     void setFrameTex(u8 areaIdx, u8 frameIndex);
-    void imageLoaded() { m_shouldUpdateEmblem = true; m_shouldUpdateName = true; }
+    void imageLoaded() { m_shouldUpdateEmblem = true; m_shouldUpdateName = true; m_readyToDisplay = true; }
     bool shouldUpdateEmblem() { return m_shouldUpdateEmblem; }
     bool shouldUpdateName() { return m_shouldUpdateName; }
     void emblemUpdated() { m_shouldUpdateEmblem = false; }
