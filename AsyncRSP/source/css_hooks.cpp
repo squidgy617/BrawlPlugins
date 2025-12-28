@@ -17,7 +17,7 @@
 #include <st/loader/st_loader_player.h>
 #include <gm/gm_global.h>
 
-// #define MEMORY_EXPANSION
+#define MEMORY_EXPANSION
 // #define DEBUG
 
 #ifdef MEMORY_EXPANSION

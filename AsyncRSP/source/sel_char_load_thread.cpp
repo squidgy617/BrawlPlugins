@@ -9,7 +9,7 @@
 #include <mu/menu.h>
 #include <cstdio>
 
-// #define MEMORY_EXPANSION
+#define MEMORY_EXPANSION
 // #define DEBUG
 
 #ifdef MEMORY_EXPANSION
