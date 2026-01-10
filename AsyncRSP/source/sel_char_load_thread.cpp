@@ -42,6 +42,7 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_activeBuffer = 0;
     m_inactiveBuffer = 1;
     m_readyToDisplay = false;
+    m_skipDelay = false;
 
     m_fileBuffer = gfHeapManager::alloc(threadBufferHeap, threadBufferSize);
     m_buffers[m_activeBuffer] = area->m_charPicData;
@@ -83,6 +84,7 @@ void selCharLoadThread::main()
         if (!isNoLoadSelchKind(area->m_charKind) && this->m_toLoad == -1)
         {
             this->m_dataReady = true;
+            this->m_skipDelay = true;
             area->setCharPic(this->m_loaded,
                              area->m_playerKind,
                              area->m_charColorNo,
@@ -92,6 +94,7 @@ void selCharLoadThread::main()
         }
         else if (isNoLoadSelchKind(area->m_charKind)) {
             this->m_dataReady = true;
+            this->m_skipDelay = true;
             area->setCharPic(area->m_charKind,
                              area->m_playerKind,
                              area->m_charColorNo,
@@ -115,6 +118,7 @@ void selCharLoadThread::main()
             this->m_toLoad = -1;
             if (this->findAndCopyThreadWithPortraitAlreadyLoaded(this->m_loaded)) {
                 this->m_dataReady = true;
+                this->m_skipDelay = true;
                 area->setCharPic(this->m_loaded,
                                  area->m_playerKind,
                                  area->m_charColorNo,

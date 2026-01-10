@@ -24,6 +24,7 @@ protected:
     bool m_shouldUpdateEmblem;
     bool m_shouldUpdateName;
     int m_lastSelectedCharKind;
+    bool m_skipDelay;
 
 public:
     selCharLoadThread(muSelCharPlayerArea* area);
@@ -38,7 +39,7 @@ public:
     void* getFileBuffer() { return m_fileBuffer; }
     bool isRunning() { return m_isRunning; }
     bool isReady() { return m_dataReady; }
-    void imageDisplayed() { m_readyToDisplay = false; }
+    void imageDisplayed() { m_readyToDisplay = false; m_skipDelay = false; }
     bool isReadyToDisplay() { return m_readyToDisplay; }
     void setCharPic();
     int getAreaIdx() { return m_playerArea->m_areaIdx; }
@@ -54,6 +55,7 @@ public:
     void emblemUpdated() { m_shouldUpdateEmblem = false; }
     void nameUpdated() { m_shouldUpdateName = false; }
     void swapBuffers() { int holdBuffer = m_activeBuffer; m_activeBuffer = m_inactiveBuffer; m_inactiveBuffer = holdBuffer; }
+    bool shouldSkipDelay() { return m_skipDelay; }
 
     static bool isExcludedSelchKind(u8 selchKind);
     static bool isNoLoadSelchKind(u8 selchKind);

@@ -217,22 +217,25 @@ namespace CSSHooks {
             // if the CSP data is in the archive, load the data from there
             void* fileBuffer = thread->getFileBuffer();
             void* activeBuffer = thread->getActiveBuffer();
-            // If thread is not ready to display, copy stuff to buffer
-            if (!thread->isReadyToDisplay())
+            // copy data from temp load buffer
+            memcpy(activeBuffer, fileBuffer, bufferSize);
+
+            DCFlushRange(activeBuffer, bufferSize);
+
+            // set ResFile to point to filedata
+            area->m_charPicRes = ResFile(activeBuffer);
+
+            // Swap which buffer is active
+            thread->swapBuffers();
+
+            // Mark image as loaded - thread will init resfile
+            thread->imageLoaded();
+            
+            // Init resfile right away if we don't want a delay
+            if (thread->shouldSkipDelay())
             {
-                // copy data from temp load buffer
-                memcpy(activeBuffer, fileBuffer, bufferSize);
-
-                DCFlushRange(activeBuffer, bufferSize);
-
-                // set ResFile to point to filedata
-                area->m_charPicRes = ResFile(activeBuffer);
-
-                // Swap which buffer is active
-                thread->swapBuffers();
-
-                // Mark image as loaded - thread will init resfile
-                thread->imageLoaded();
+                ResFile::Init(&area->m_charPicRes);
+                thread->imageDisplayed();
             }
 
             return &area->m_charPicRes;
