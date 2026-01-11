@@ -44,6 +44,7 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_readyToDisplay = false;
     m_skipDelay = false;
     m_shouldUpdateMaterial = false;
+    m_actuallyUpdateMaterial = false;
 
     m_fileBuffer = gfHeapManager::alloc(threadBufferHeap, threadBufferSize);
     m_buffers[m_activeBuffer] = area->m_charPicData;
@@ -169,6 +170,16 @@ void selCharLoadThread::main()
         // Mark image as displayed
         this->imageDisplayed();
     }
+    else if (this->m_shouldUpdateMaterial)
+    {
+        this->m_actuallyUpdateMaterial = true;
+        area->setCharPic(area->m_charKind,
+                             area->m_playerKind,
+                             area->m_charColorNo,
+                             area->isTeamBattle(),
+                             area->m_teamColor,
+                             area->m_teamSet);
+    }
 }
 
 
@@ -183,6 +194,7 @@ void selCharLoadThread::requestLoad(int charKind, bool hasCsp)
             m_shouldUpdateEmblem = false;
             m_shouldUpdateName = false;
             m_shouldUpdateMaterial = false;
+            m_actuallyUpdateMaterial = false;
         }
     }
     m_lastSelectedCharKind = charKind;
@@ -201,6 +213,7 @@ void selCharLoadThread::reset()
     m_shouldUpdateEmblem = false;
     m_shouldUpdateName = false;
     m_shouldUpdateMaterial = false;
+    m_actuallyUpdateMaterial = false;
     m_toLoad = -1;
 }
 

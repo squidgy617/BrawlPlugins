@@ -236,6 +236,7 @@ namespace CSSHooks {
             {
                 ResFile::Init(&area->m_charPicRes);
                 thread->imageDisplayed();
+                thread->materialUpdateStarted();
             }
 
             return &area->m_charPicRes;
