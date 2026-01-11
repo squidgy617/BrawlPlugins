@@ -43,8 +43,8 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_inactiveBuffer = 1;
     m_readyToDisplay = false;
     m_skipDelay = false;
-    m_shouldUpdateMaterial = false;
-    m_actuallyUpdateMaterial = false;
+    m_startMaterialUpdate = false;
+    m_finishMaterialUpdate = false;
 
     m_fileBuffer = gfHeapManager::alloc(threadBufferHeap, threadBufferSize);
     m_buffers[m_activeBuffer] = area->m_charPicData;
@@ -170,9 +170,9 @@ void selCharLoadThread::main()
         // Mark image as displayed
         this->imageDisplayed();
     }
-    else if (this->m_shouldUpdateMaterial)
+    else if (this->m_startMaterialUpdate)
     {
-        this->m_actuallyUpdateMaterial = true;
+        this->m_finishMaterialUpdate = true;
         area->setCharPic(area->m_charKind,
                              area->m_playerKind,
                              area->m_charColorNo,
@@ -193,8 +193,8 @@ void selCharLoadThread::requestLoad(int charKind, bool hasCsp)
         if (!hasCsp) {
             m_shouldUpdateEmblem = false;
             m_shouldUpdateName = false;
-            m_shouldUpdateMaterial = false;
-            m_actuallyUpdateMaterial = false;
+            m_startMaterialUpdate = false;
+            m_finishMaterialUpdate = false;
         }
     }
     m_lastSelectedCharKind = charKind;
@@ -212,8 +212,8 @@ void selCharLoadThread::reset()
     m_dataReady = false;
     m_shouldUpdateEmblem = false;
     m_shouldUpdateName = false;
-    m_shouldUpdateMaterial = false;
-    m_actuallyUpdateMaterial = false;
+    m_startMaterialUpdate = false;
+    m_finishMaterialUpdate = false;
     m_toLoad = -1;
 }
 
