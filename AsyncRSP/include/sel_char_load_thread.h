@@ -24,6 +24,7 @@ protected:
     bool m_shouldUpdateName;
     bool m_shouldUpdatePortrait;
     int m_lastSelectedCharKind;
+    bool m_forcePortraitLoad;
 
 public:
     selCharLoadThread(muSelCharPlayerArea* area);
@@ -52,8 +53,10 @@ public:
     bool shouldUpdatePortrait() { return m_shouldUpdatePortrait; }
     void emblemUpdated() { m_shouldUpdateEmblem = false; }
     void nameUpdated() { m_shouldUpdateName = false; }
-    void portraitUpdated() { m_shouldUpdatePortrait = false; }
+    void portraitUpdated() { m_shouldUpdatePortrait = false; m_forcePortraitLoad = false; }
     void swapBuffers() { int holdBuffer = m_activeBuffer; m_activeBuffer = m_inactiveBuffer; m_inactiveBuffer = holdBuffer; }
+    bool shouldForcePortrait() { return m_forcePortraitLoad; }
+    void forcePortraitToLoad() { m_forcePortraitLoad = true; }
 
     static bool isExcludedSelchKind(u8 selchKind);
     static bool isNoLoadSelchKind(u8 selchKind);

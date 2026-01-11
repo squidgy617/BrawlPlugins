@@ -38,6 +38,7 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_shouldUpdateEmblem = false;
     m_shouldUpdateName = false;
     m_shouldUpdatePortrait = false;
+    m_forcePortraitLoad = false;
     m_lastSelectedCharKind = -1;
     m_activeBuffer = 0;
     m_inactiveBuffer = 1;
@@ -169,6 +170,7 @@ void selCharLoadThread::requestLoad(int charKind, bool hasCsp)
     }
     else {
         m_toLoad = charKind;
+        m_forcePortraitLoad = hasCsp;
         if (!hasCsp) {
             m_shouldUpdateEmblem = false;
             m_shouldUpdateName = false;
@@ -191,6 +193,7 @@ void selCharLoadThread::reset()
     m_shouldUpdateEmblem = false;
     m_shouldUpdateName = false;
     m_shouldUpdatePortrait = false;
+    m_forcePortraitLoad = false;
     m_toLoad = -1;
 }
 

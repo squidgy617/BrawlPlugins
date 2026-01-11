@@ -314,6 +314,42 @@ namespace CSSHooks {
         }
     }
 
+    bool getPortraitLoaded()
+    {
+        register muSelCharPlayerArea* area;
+        register int chrKind;
+
+        asm
+        {
+            mr area, r30;
+            mr chrKind, r31;
+        }
+
+        selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
+        if (thread->shouldForcePortrait())
+        {
+            thread->portraitUpdated();
+            return true;
+        }
+        return false;
+    }
+
+    asm void skipPortraitChange()
+    {
+        nofralloc
+        mr r10, r3
+        bl getPortraitLoaded
+        cmpwi r3, 1             // check if portrait changed
+        mr r3, r10
+        mr r4, r3               // original instruction
+        beq continueChange
+
+        b _materialChangeSkip
+
+        continueChange:
+        b _materialChangeReturn
+    }
+
     void setRandom()
     {
         register muSelCharPlayerArea* area;
@@ -323,8 +359,11 @@ namespace CSSHooks {
             mr area, r30;
         }
 
-        area->m_muCharPic->changeMaterialTex(1, "MenSelchrFaceB.501");
-        area->m_muCharPic->changeMaterialTex(0, "MenSelchrFaceB.501");
+        selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
+        thread->forcePortraitToLoad();
+
+        // area->m_muCharPic->changeMaterialTex(1, "MenSelchrFaceB.501");
+        // area->m_muCharPic->changeMaterialTex(0, "MenSelchrFaceB.501");
     }
 
     asm void clearFranchiseIcons() {
@@ -358,11 +397,11 @@ namespace CSSHooks {
         if (moduleID == Modules::SORA_MENU_SEL_CHAR)
         {  
             // Nop changeMaterialTex calls
-            writeAddr = textAddr + 0x14D1C;
-            *(u32*)writeAddr = 0x60000000;
+            // writeAddr = textAddr + 0x14D1C;
+            // *(u32*)writeAddr = 0x60000000;
 
-            writeAddr = textAddr + 0x14D40;
-            *(u32*)writeAddr = 0x60000000;
+            // writeAddr = textAddr + 0x14D40;
+            // *(u32*)writeAddr = 0x60000000;
 
             #ifdef MEMORY_EXPANSION
             writeAddr = 0x80693B10; // Change copying to happen in the Fighter2Resource heap
@@ -431,6 +470,10 @@ namespace CSSHooks {
         // hook to change name when portrait loads
         api->syInlineHookRel(0x00014D90, 
                             reinterpret_cast<void*>(changeName),
+                            Modules::SORA_MENU_SEL_CHAR);
+
+        api->sySimpleHookRel(0x00014D08,
+                            reinterpret_cast<void*>(skipPortraitChange),
                             Modules::SORA_MENU_SEL_CHAR);
 
         // hook to clear existing franchise icon behavior

@@ -10,4 +10,6 @@ namespace CSSHooks {
     void _placeholderTextureReturn();
     void _placeholderTextureSkip();
     void _logStuffReturn();
+    void _materialChangeSkip();
+    void _materialChangeReturn();
 } // namespace CSSHooks
