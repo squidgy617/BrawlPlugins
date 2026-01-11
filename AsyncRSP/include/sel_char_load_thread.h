@@ -22,6 +22,7 @@ protected:
     bool m_isRunning;
     bool m_shouldUpdateEmblem;
     bool m_shouldUpdateName;
+    bool m_shouldUpdatePortrait;
     int m_lastSelectedCharKind;
 
 public:
@@ -45,11 +46,13 @@ public:
     bool findAndCopyThreadWithPortraitAlreadyLoaded(u8 selchKind);
     void setData(void* m_copy);
     void setFrameTex(u8 areaIdx, u8 frameIndex);
-    void imageLoaded() { m_shouldUpdateEmblem = true; m_shouldUpdateName = true; }
+    void imageLoaded() { m_shouldUpdateEmblem = true; m_shouldUpdateName = true; m_shouldUpdatePortrait = true; }
     bool shouldUpdateEmblem() { return m_shouldUpdateEmblem; }
     bool shouldUpdateName() { return m_shouldUpdateName; }
+    bool shouldUpdatePortrait() { return m_shouldUpdatePortrait; }
     void emblemUpdated() { m_shouldUpdateEmblem = false; }
     void nameUpdated() { m_shouldUpdateName = false; }
+    void portraitUpdated() { m_shouldUpdatePortrait = false; }
     void swapBuffers() { int holdBuffer = m_activeBuffer; m_activeBuffer = m_inactiveBuffer; m_inactiveBuffer = holdBuffer; }
 
     static bool isExcludedSelchKind(u8 selchKind);

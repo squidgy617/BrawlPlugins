@@ -12,7 +12,7 @@ export LIB 		:= $(CURDIR)/lib
 
 .PHONY: all Physics AsyncRSP CodeMenu ftp NetLog
 
-all: Physics AsyncRSP CodeMenu ftp NetLog
+all: AsyncRSP
 
 AsyncRSP:
 	$(MAKE) -C AsyncRSP

@@ -17,7 +17,7 @@
 #include <st/loader/st_loader_player.h>
 #include <gm/gm_global.h>
 
-// #define MEMORY_EXPANSION
+#define MEMORY_EXPANSION
 // #define DEBUG
 
 #ifdef MEMORY_EXPANSION
@@ -314,6 +314,19 @@ namespace CSSHooks {
         }
     }
 
+    void setRandom()
+    {
+        register muSelCharPlayerArea* area;
+        // Pull vars from registers
+        asm
+        {
+            mr area, r30;
+        }
+
+        area->m_muCharPic->changeMaterialTex(1, "MenSelchrFaceB.501");
+        area->m_muCharPic->changeMaterialTex(0, "MenSelchrFaceB.501");
+    }
+
     asm void clearFranchiseIcons() {
         nofralloc
         cmpwi r31, 0x29	// if random, continue to call setFrameTex
@@ -344,6 +357,13 @@ namespace CSSHooks {
 
         if (moduleID == Modules::SORA_MENU_SEL_CHAR)
         {  
+            // Nop changeMaterialTex calls
+            writeAddr = textAddr + 0x14D1C;
+            *(u32*)writeAddr = 0x60000000;
+
+            writeAddr = textAddr + 0x14D40;
+            *(u32*)writeAddr = 0x60000000;
+
             #ifdef MEMORY_EXPANSION
             writeAddr = 0x80693B10; // Change copying to happen in the Fighter2Resource heap
             *(u32*)writeAddr = 0x38600013; // 43 (MenuResource) -> 19 (Fighter2Resource)
@@ -416,6 +436,11 @@ namespace CSSHooks {
         // hook to clear existing franchise icon behavior
         api->sySimpleHookRel(0x00014810,
                             reinterpret_cast<void*>(clearFranchiseIcons),
+                            Modules::SORA_MENU_SEL_CHAR);
+        
+        // Hook to make random update portraits since regular portrait update got removed
+        api->syInlineHookRel(0x00014C90,
+                            reinterpret_cast<void*>(setRandom),
                             Modules::SORA_MENU_SEL_CHAR);
 
         #ifdef DEBUG
