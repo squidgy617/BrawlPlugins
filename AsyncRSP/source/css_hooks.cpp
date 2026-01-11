@@ -340,6 +340,42 @@ namespace CSSHooks {
         bctrl
     }
 
+    bool getPortraitLoaded()
+    {
+        register muSelCharPlayerArea* area;
+        register int chrKind;
+
+        asm
+        {
+            mr area, r30;
+            mr chrKind, r31;
+        }
+
+        selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
+        if (thread->shouldUpdateMaterial() || thread->isNoLoadSelchKind(chrKind))
+        {
+            thread->materialUpdated();
+            return true;
+        }
+        return false;
+    }
+
+    asm void skipPortraitChange()
+    {
+        nofralloc
+        mr r10, r3
+        bl getPortraitLoaded
+        cmpwi r3, 1             // check if portrait changed
+        mr r3, r10
+        mr r4, r3               // original instruction
+        beq continueChange
+
+        b _materialChangeSkip
+
+        continueChange:
+        b _materialChangeReturn
+    }
+
     void onModuleLoaded(gfModuleInfo* info)
     {
         gfModuleHeader* header = info->m_module->header;
@@ -416,6 +452,15 @@ namespace CSSHooks {
         // hook to change name when portrait loads
         api->syInlineHookRel(0x00014D90, 
                             reinterpret_cast<void*>(changeName),
+                            Modules::SORA_MENU_SEL_CHAR);
+
+        // // hook to load whether portrait is loaded or not
+        // api->syInlineHookRel(0x00014D14,
+        //                     reinterpret_cast<void*>(getPortraitLoaded),
+        //                     Modules::SORA_MENU_SEL_CHAR);
+
+        api->sySimpleHookRel(0x00014D08,
+                            reinterpret_cast<void*>(skipPortraitChange),
                             Modules::SORA_MENU_SEL_CHAR);
 
         // hook to clear existing franchise icon behavior

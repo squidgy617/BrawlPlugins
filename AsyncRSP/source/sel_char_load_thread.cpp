@@ -43,6 +43,7 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_inactiveBuffer = 1;
     m_readyToDisplay = false;
     m_skipDelay = false;
+    m_shouldUpdateMaterial = false;
 
     m_fileBuffer = gfHeapManager::alloc(threadBufferHeap, threadBufferSize);
     m_buffers[m_activeBuffer] = area->m_charPicData;
@@ -152,6 +153,19 @@ void selCharLoadThread::main()
         // init resFile
         nw4r::g3d::ResFile::Init(&area->m_charPicRes);
 
+        // Test code for changing material directly
+        // char name[64];
+        // int charKind = this->m_loaded;
+        // int id = muMenu::exchangeMuSelchkind2MuStockchkind(charKind);
+        // id = muMenu::getStockFrameID(id);
+        // sprintf(name, "MenSelchrFaceB.%03d", area->m_charColorNo + 1 + (id * 10));
+        // OSReport("%s %d %d \n", name, area->m_charColorNo, area->m_charKind);
+        // nw4r::g3d::ResFile* resFile = &area->m_charPicRes;
+        // area->m_muCharPic->changeMaterialTex(1, name, &resFile);
+        // area->m_muCharPic->changeMaterialTex(0, name, &resFile);
+
+        // this->materialUpdated();
+
         // Mark image as displayed
         this->imageDisplayed();
     }
@@ -168,6 +182,7 @@ void selCharLoadThread::requestLoad(int charKind, bool hasCsp)
         if (!hasCsp) {
             m_shouldUpdateEmblem = false;
             m_shouldUpdateName = false;
+            m_shouldUpdateMaterial = false;
         }
     }
     m_lastSelectedCharKind = charKind;
@@ -185,6 +200,7 @@ void selCharLoadThread::reset()
     m_dataReady = false;
     m_shouldUpdateEmblem = false;
     m_shouldUpdateName = false;
+    m_shouldUpdateMaterial = false;
     m_toLoad = -1;
 }
 

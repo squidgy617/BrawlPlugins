@@ -25,6 +25,7 @@ protected:
     bool m_shouldUpdateName;
     int m_lastSelectedCharKind;
     bool m_skipDelay;
+    bool m_shouldUpdateMaterial;
 
 public:
     selCharLoadThread(muSelCharPlayerArea* area);
@@ -49,13 +50,15 @@ public:
     bool findAndCopyThreadWithPortraitAlreadyLoaded(u8 selchKind);
     void setData(void* m_copy);
     void setFrameTex(u8 areaIdx, u8 frameIndex);
-    void imageLoaded() { m_shouldUpdateEmblem = true; m_shouldUpdateName = true; m_readyToDisplay = true; }
+    void imageLoaded() { m_shouldUpdateEmblem = true; m_shouldUpdateName = true; m_shouldUpdateMaterial = true; m_readyToDisplay = true; }
     bool shouldUpdateEmblem() { return m_shouldUpdateEmblem; }
     bool shouldUpdateName() { return m_shouldUpdateName; }
     void emblemUpdated() { m_shouldUpdateEmblem = false; }
     void nameUpdated() { m_shouldUpdateName = false; }
+    void materialUpdated() { m_shouldUpdateMaterial = true; }
     void swapBuffers() { int holdBuffer = m_activeBuffer; m_activeBuffer = m_inactiveBuffer; m_inactiveBuffer = holdBuffer; }
     bool shouldSkipDelay() { return m_skipDelay; }
+    bool shouldUpdateMaterial() { return m_shouldUpdateMaterial; }
 
     static bool isExcludedSelchKind(u8 selchKind);
     static bool isNoLoadSelchKind(u8 selchKind);
