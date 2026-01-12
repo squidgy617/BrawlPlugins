@@ -42,6 +42,7 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_lastSelectedCharKind = -1;
     m_activeBuffer = 0;
     m_inactiveBuffer = 1;
+    m_fighterChange = false;
 
     m_fileBuffer = gfHeapManager::alloc(threadBufferHeap, threadBufferSize);
     m_buffers[m_activeBuffer] = area->m_charPicData;
@@ -89,6 +90,7 @@ void selCharLoadThread::main()
                              area->isTeamBattle(),
                              area->m_teamColor,
                              area->m_teamSet);
+            this->m_dataReady = false;
         }
         else if (isNoLoadSelchKind(area->m_charKind)) {
             this->m_dataReady = true;
@@ -98,6 +100,7 @@ void selCharLoadThread::main()
                              area->isTeamBattle(),
                              area->m_teamColor,
                              area->m_teamSet);
+            this->m_dataReady = false;
         }
     }
     else if ((this->m_isRunning && this->m_handle.isReady() && this->m_handle.getReturnStatus() == 1)) {
@@ -121,6 +124,7 @@ void selCharLoadThread::main()
                                  area->isTeamBattle(),
                                  area->m_teamColor,
                                  area->m_teamSet);
+                this->m_dataReady = false;
             }
             else {
                 // Clear read request and signal that read is in progress
@@ -159,6 +163,8 @@ void selCharLoadThread::main()
         }
 
         portraitUpdated();
+
+        this->m_fighterChange = false;
     }
 }
 

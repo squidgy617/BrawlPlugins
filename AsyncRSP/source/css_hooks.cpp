@@ -199,7 +199,7 @@ namespace CSSHooks {
         else if (area->m_charKind != charKind) {
             thread->imageLoaded();
         }
-        if (!thread->isReady()) {
+        if (!thread->isReady() && thread->isFighterChange()) {
             void* activeBuffer = thread->getActiveBuffer();
             CXUncompressLZ(data, activeBuffer);
             // flush cache
@@ -252,6 +252,34 @@ namespace CSSHooks {
         }
         blankImage(area->m_muCharPic);
 
+    }
+
+    void(*_setCharKind)(void*, MuSelchkind);
+    void setCharKind(muSelCharPlayerArea* area, MuSelchkind charKind)
+    {
+        selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
+        thread->setFighterChange();
+        if (thread->getLastSelectedCharKind() == charKind)
+        {
+            thread->dataIsReady();
+        }
+        _setCharKind(area, charKind);
+    }
+
+    void(*_setPoke3)(void*, int selectedPoke);
+    void setPoke3(muSelCharPlayerArea* area, int selectedPoke)
+    {
+        selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
+        thread->setFighterChange();
+        _setPoke3(area, selectedPoke);
+    }
+
+    void(*_setZeldas)(void*, int selectedZelda);
+    void setZeldas(muSelCharPlayerArea* area, int selectedZelda)
+    {
+        selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
+        thread->setFighterChange();
+        _setZeldas(area, selectedZelda);
     }
 
     void (*_loadCharPic)(void*);
@@ -437,6 +465,22 @@ namespace CSSHooks {
                               reinterpret_cast<void*>(loadCharPic),
                               (void**)&_loadCharPic,
                               Modules::SORA_MENU_SEL_CHAR);
+        
+        // hook onto these functions so we can determine if portrait change was triggered by fighter changing
+        api->syReplaceFuncRel(0x0001469C,
+                            reinterpret_cast<void*>(setCharKind),
+                            (void**)&_setCharKind,
+                            Modules::SORA_MENU_SEL_CHAR);
+
+        api->syReplaceFuncRel(0x00012140,
+                            reinterpret_cast<void*>(setPoke3),
+                            (void**)&_setPoke3,
+                            Modules::SORA_MENU_SEL_CHAR);
+        
+        api->syReplaceFuncRel(0x00012070,
+                            reinterpret_cast<void*>(setZeldas),
+                            (void**)&_setZeldas,
+                            Modules::SORA_MENU_SEL_CHAR);
 
         #ifdef MEMORY_EXPANSION
         // hook to start deallocating PACs when we leave SSS
