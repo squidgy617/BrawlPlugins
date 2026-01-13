@@ -149,22 +149,21 @@ void selCharLoadThread::main()
     // Update portrait only when the archive is fully loaded
     if (this->shouldUpdatePortrait())
     {
-        if (!isNoLoadSelchKind(this->m_loaded))
-        {
-            char name[64];
-            int charKind = this->m_loaded;
-            int id = muMenu::exchangeMuSelchkind2MuStockchkind(charKind);
-            id = muMenu::getStockFrameID(id);
-            sprintf(name, "MenSelchrFaceB.%03d", area->m_charColorNo + 1 + (id * 10));
-            // OSReport("%s %d %d \n", name, area->m_charColorNo, area->m_charKind);
-            nw4r::g3d::ResFile* resFile = &area->m_charPicRes;
-            area->m_muCharPic->changeMaterialTex(1, name, resFile);
-            area->m_muCharPic->changeMaterialTex(0, name, resFile);
-        }
+        char name[64];
+        int charKind = this->m_loaded;
+        int id = muMenu::exchangeMuSelchkind2MuStockchkind(charKind);
+        id = muMenu::getStockFrameID(id);
+        sprintf(name, "MenSelchrFaceB.%03d", area->m_charColorNo + 1 + (id * 10));
+        // OSReport("%s %d %d \n", name, area->m_charColorNo, area->m_charKind);
+        nw4r::g3d::ResFile* resFile = &area->m_charPicRes;
+        area->m_muCharPic->changeMaterialTex(1, name, resFile);
+        area->m_muCharPic->changeMaterialTex(0, name, resFile);
 
         portraitUpdated();
 
+        // Portrait update is complete, so reset to prevent issues with load timing
         this->m_fighterChange = false;
+        this->m_dataReady = false;
     }
 }
 

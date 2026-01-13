@@ -62,6 +62,7 @@ public:
     int getLastSelectedCharKind() { return m_lastSelectedCharKind; }
     bool isFighterChange() { return m_fighterChange; }
     void setFighterChange() { m_fighterChange = true; }
+    void clearFighterChange() { m_fighterChange = false; }
 
     static bool isExcludedSelchKind(u8 selchKind);
     static bool isNoLoadSelchKind(u8 selchKind);
