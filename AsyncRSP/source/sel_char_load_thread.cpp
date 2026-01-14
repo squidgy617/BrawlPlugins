@@ -153,7 +153,16 @@ void selCharLoadThread::main()
         int charKind = this->m_loaded;
         int id = muMenu::exchangeMuSelchkind2MuStockchkind(charKind);
         id = muMenu::getStockFrameID(id);
-        sprintf(name, "MenSelchrFaceB.%03d", area->m_charColorNo + 1 + (id * 10));
+        int colorNo = area->m_charColorNo;
+        if (area->isTeamBattle())
+        {
+            int convertedID = area->exchangeCharKindDetail(area->m_charKind);
+            int teamColorNo = muMenu::findCharTeamColorNo(convertedID, area->m_teamColor, area->m_teamSet);
+            OSReport("CharNo: %03d, TeamColorNo: %03d, ColorNo: %03d, TeamColor: %03d, TeamSet: %03d\n", 
+                convertedID, teamColorNo, colorNo, area->m_teamColor, area->m_teamSet);
+            colorNo = teamColorNo;
+        }
+        sprintf(name, "MenSelchrFaceB.%03d", colorNo + 1 + (id * 10));
         // OSReport("%s %d %d \n", name, area->m_charColorNo, area->m_charKind);
         nw4r::g3d::ResFile* resFile = &area->m_charPicRes;
         area->m_muCharPic->changeMaterialTex(1, name, resFile);
