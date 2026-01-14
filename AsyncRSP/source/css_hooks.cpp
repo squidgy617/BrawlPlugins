@@ -357,7 +357,6 @@ namespace CSSHooks {
         selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
         if (thread->shouldForcePortrait())
         {
-            thread->clearFighterChange();
             thread->portraitUpdated();
             return true;
         }
