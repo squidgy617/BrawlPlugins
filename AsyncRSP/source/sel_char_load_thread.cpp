@@ -43,6 +43,7 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_activeBuffer = 0;
     m_inactiveBuffer = 1;
     m_fighterChange = false;
+    m_hiddenFighter = false;
 
     m_fileBuffer = gfHeapManager::alloc(threadBufferHeap, threadBufferSize);
     m_buffers[m_activeBuffer] = area->m_charPicData;

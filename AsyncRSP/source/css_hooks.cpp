@@ -191,8 +191,9 @@ namespace CSSHooks {
         }
 
         // if the CSP is not in the archive request to load the RSP instead
-        if (thread->getLoadedCharKind() != charKind)
+        if (thread->getLoadedCharKind() != charKind || thread->isHiddenFighter())
         {
+            thread->clearHiddenFighter();
             thread->requestLoad(charKind, cspExists);
         }
         // If character is already loaded mark as such
@@ -279,6 +280,12 @@ namespace CSSHooks {
     void setZeldas(muSelCharPlayerArea* area, int selectedZelda)
     {
         selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
+        // Fix for DLC.asm, ensures fighter portraits always load on random
+        if (area->m_charKind == 0x29)
+        {
+            thread->clearDataReady();
+            thread->setHiddenFighter();
+        }
         thread->setFighterChange();
         _setZeldas(area, selectedZelda);
     }

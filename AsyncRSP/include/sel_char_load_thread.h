@@ -25,7 +25,9 @@ protected:
     bool m_shouldUpdatePortrait;
     int m_lastSelectedCharKind;
     bool m_forcePortraitLoad;
+    // Below are for DLC.asm support only
     bool m_fighterChange;
+    bool m_hiddenFighter;
 
 public:
     selCharLoadThread(muSelCharPlayerArea* area);
@@ -59,10 +61,14 @@ public:
     bool shouldForcePortrait() { return m_forcePortraitLoad; }
     void forcePortraitToLoad() { m_forcePortraitLoad = true; }
     void dataIsReady() { m_dataReady = true; }
+    void clearDataReady() { m_dataReady = false; }
     int getLastSelectedCharKind() { return m_lastSelectedCharKind; }
     bool isFighterChange() { return m_fighterChange; }
     void setFighterChange() { m_fighterChange = true; }
     void clearFighterChange() { m_fighterChange = false; }
+    bool isHiddenFighter() { return m_hiddenFighter; }
+    void setHiddenFighter() { m_hiddenFighter = true; }
+    void clearHiddenFighter() { m_hiddenFighter = false; }
 
     static bool isExcludedSelchKind(u8 selchKind);
     static bool isNoLoadSelchKind(u8 selchKind);
