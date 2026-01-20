@@ -155,7 +155,7 @@ void selCharLoadThread::main()
         int id = muMenu::exchangeMuSelchkind2MuStockchkind(charKind);
         id = muMenu::getStockFrameID(id);
         int colorNo = area->m_charColorNo;
-        if (area->isTeamBattle() && area->m_selCharTask->m_teamBattleType != Team_Glow) // Check if team battle and not team glow
+        if (area->isTeamBattle() && area->m_selCharTask->m_teamBattleType != Team_Battle_Glow) // Check if team battle and not team glow
         {
             int convertedID = area->exchangeCharKindDetail(area->m_charKind);
             int teamColorNo = muMenu::findCharTeamColorNo(convertedID, area->m_teamColor, area->m_teamSet);
