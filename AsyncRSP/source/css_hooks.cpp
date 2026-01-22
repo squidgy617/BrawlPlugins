@@ -255,7 +255,6 @@ namespace CSSHooks {
 
     }
 
-    // TODO: hitting random first then dragging to character causes an error, only if random is first thing you hover over
     void(*_setCharKind)(void*, MuSelchkind);
     void setCharKind(muSelCharPlayerArea* area, MuSelchkind charKind)
     {

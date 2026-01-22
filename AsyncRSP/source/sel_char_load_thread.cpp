@@ -42,7 +42,7 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_lastSelectedCharKind = -1;
     m_activeBuffer = 0;
     m_inactiveBuffer = 1;
-    m_fighterChange = false;
+    m_fighterChange = true;
     m_hiddenFighter = false;
 
     m_fileBuffer = gfHeapManager::alloc(threadBufferHeap, threadBufferSize);
