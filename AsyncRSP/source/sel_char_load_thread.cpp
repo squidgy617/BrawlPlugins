@@ -8,14 +8,16 @@
 #include <mu/menu.h>
 #include <cstdio>
 
-// #define MEMORY_EXPANSION
+#define MEMORY_EXPANSION
 // #define DEBUG
 
 #ifdef MEMORY_EXPANSION
 Heaps::HeapType threadBufferHeap = Heaps::Fighter3Resource;
+Heaps::HeapType inactiveBufferHeap = Heaps::Fighter4Resource;
 u32 threadBufferSize = 0xE0000;
 #else
 Heaps::HeapType threadBufferHeap = Heaps::MenuResource;
+Heaps::HeapType inactiveBufferHeap = Heaps::MenuResource;
 u32 threadBufferSize = 0x40000;
 #endif
 
@@ -35,10 +37,17 @@ selCharLoadThread::selCharLoadThread(muSelCharPlayerArea* area)
     m_isRunning = false;
     m_shouldUpdateEmblem = false;
     m_shouldUpdateName = false;
+    m_shouldUpdatePortrait = false;
+    m_forcePortraitLoad = false;
     m_lastSelectedCharKind = -1;
+    m_activeBuffer = 0;
+    m_inactiveBuffer = 1;
+    m_fighterChange = true;
+    m_hiddenFighter = false;
 
     m_fileBuffer = gfHeapManager::alloc(threadBufferHeap, threadBufferSize);
-    m_buffer = area->m_charPicData;
+    m_buffers[m_activeBuffer] = area->m_charPicData;
+    m_buffers[m_inactiveBuffer] = gfHeapManager::alloc(inactiveBufferHeap, threadBufferSize);
     s_threads[area->m_areaIdx] = this;
 }
 
@@ -82,6 +91,7 @@ void selCharLoadThread::main()
                              area->isTeamBattle(),
                              area->m_teamColor,
                              area->m_teamSet);
+            this->m_dataReady = false;
         }
         else if (isNoLoadSelchKind(area->m_charKind)) {
             this->m_dataReady = true;
@@ -91,6 +101,7 @@ void selCharLoadThread::main()
                              area->isTeamBattle(),
                              area->m_teamColor,
                              area->m_teamSet);
+            this->m_dataReady = false;
         }
     }
     else if ((this->m_isRunning && this->m_handle.isReady() && this->m_handle.getReturnStatus() == 1)) {
@@ -114,6 +125,7 @@ void selCharLoadThread::main()
                                  area->isTeamBattle(),
                                  area->m_teamColor,
                                  area->m_teamSet);
+                this->m_dataReady = false;
             }
             else {
                 // Clear read request and signal that read is in progress
@@ -134,6 +146,35 @@ void selCharLoadThread::main()
 
         }
     }
+
+    // Update portrait only when the archive is fully loaded
+    if (this->shouldUpdatePortrait())
+    {
+        char name[64];
+        int charKind = this->m_loaded;
+        int id = muMenu::exchangeMuSelchkind2MuStockchkind(charKind);
+        id = muMenu::getStockFrameID(id);
+        int colorNo = area->m_charColorNo;
+        if (area->isTeamBattle() && area->m_selCharTask->m_teamBattleType != Team_Battle_Glow) // Check if team battle and not team glow
+        {
+            int convertedID = area->exchangeCharKindDetail(area->m_charKind);
+            int teamColorNo = muMenu::findCharTeamColorNo(convertedID, area->m_teamColor, area->m_teamSet);
+            OSReport("CharNo: %03d, TeamColorNo: %03d, ColorNo: %03d, TeamColor: %03d, TeamSet: %03d\n", 
+                convertedID, teamColorNo, colorNo, area->m_teamColor, area->m_teamSet);
+            colorNo = teamColorNo;
+        }
+        sprintf(name, "MenSelchrFaceB.%03d", colorNo + 1 + (id * 10));
+        // OSReport("%s %d %d \n", name, area->m_charColorNo, area->m_charKind);
+        nw4r::g3d::ResFile* resFile = &area->m_charPicRes;
+        area->m_muCharPic->changeMaterialTex(1, name, resFile);
+        area->m_muCharPic->changeMaterialTex(0, name, resFile);
+
+        portraitUpdated();
+
+        // Portrait update is complete, so reset to prevent issues with load timing
+        this->m_fighterChange = false;
+        this->m_dataReady = false;
+    }
 }
 
 
@@ -144,9 +185,11 @@ void selCharLoadThread::requestLoad(int charKind, bool hasCsp)
     }
     else {
         m_toLoad = charKind;
+        m_forcePortraitLoad = hasCsp;
         if (!hasCsp) {
             m_shouldUpdateEmblem = false;
             m_shouldUpdateName = false;
+            m_shouldUpdatePortrait = false;
         }
     }
     m_lastSelectedCharKind = charKind;
@@ -164,6 +207,8 @@ void selCharLoadThread::reset()
     m_dataReady = false;
     m_shouldUpdateEmblem = false;
     m_shouldUpdateName = false;
+    m_shouldUpdatePortrait = false;
+    m_forcePortraitLoad = false;
     m_toLoad = -1;
 }
 
@@ -178,6 +223,8 @@ void selCharLoadThread::setData(void* copy) {
 selCharLoadThread::~selCharLoadThread()
 {
     free(m_fileBuffer);
+    free(m_buffers[m_activeBuffer]);
+    free(m_buffers[m_inactiveBuffer]);
     m_handle.release();
     s_threads[this->getAreaIdx()] = NULL;
 }

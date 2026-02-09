@@ -17,7 +17,7 @@
 #include <st/loader/st_loader_player.h>
 #include <gm/gm_global.h>
 
-// #define MEMORY_EXPANSION
+#define MEMORY_EXPANSION
 // #define DEBUG
 
 #ifdef MEMORY_EXPANSION
@@ -191,16 +191,17 @@ namespace CSSHooks {
         }
 
         // if the CSP is not in the archive request to load the RSP instead
-        if (thread->getLoadedCharKind() != charKind)
+        if (thread->getLoadedCharKind() != charKind || thread->isHiddenFighter())
         {
+            thread->clearHiddenFighter();
             thread->requestLoad(charKind, cspExists);
         }
         // If character is already loaded mark as such
         else if (area->m_charKind != charKind) {
             thread->imageLoaded();
         }
-        if (!thread->isReady()) {
-            void* activeBuffer = area->m_charPicData;
+        if (!thread->isReady() && thread->isFighterChange()) {
+            void* activeBuffer = thread->getActiveBuffer();
             CXUncompressLZ(data, activeBuffer);
             // flush cache
             DCFlushRange(activeBuffer, bufferSize);
@@ -228,6 +229,8 @@ namespace CSSHooks {
             // init resFile and return
             ResFile::Init(&area->m_charPicRes);
 
+            thread->swapBuffers();
+
             // Mark image as loaded
             thread->imageLoaded();
 
@@ -250,6 +253,40 @@ namespace CSSHooks {
         }
         blankImage(area->m_muCharPic);
 
+    }
+
+    void(*_setCharKind)(void*, MuSelchkind);
+    void setCharKind(muSelCharPlayerArea* area, MuSelchkind charKind)
+    {
+        selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
+        thread->setFighterChange();
+        if (thread->getLastSelectedCharKind() == charKind)
+        {
+            thread->dataIsReady();
+        }
+        _setCharKind(area, charKind);
+    }
+
+    void(*_setPoke3)(void*, int selectedPoke);
+    void setPoke3(muSelCharPlayerArea* area, int selectedPoke)
+    {
+        selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
+        thread->setFighterChange();
+        _setPoke3(area, selectedPoke);
+    }
+
+    void(*_setZeldas)(void*, int selectedZelda);
+    void setZeldas(muSelCharPlayerArea* area, int selectedZelda)
+    {
+        selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
+        // Fix for DLC.asm, ensures fighter portraits always load on random
+        if (area->m_charKind == 0x29)
+        {
+            thread->clearDataReady();
+            thread->setHiddenFighter();
+        }
+        thread->setFighterChange();
+        _setZeldas(area, selectedZelda);
     }
 
     void (*_loadCharPic)(void*);
@@ -312,6 +349,58 @@ namespace CSSHooks {
         }
     }
 
+    bool getPortraitLoaded()
+    {
+        register muSelCharPlayerArea* area;
+        register int chrKind;
+
+        asm
+        {
+            mr area, r30;
+            mr chrKind, r31;
+        }
+
+        selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
+        if (thread->shouldForcePortrait())
+        {
+            thread->portraitUpdated();
+            return true;
+        }
+        return false;
+    }
+
+    asm void skipPortraitChange()
+    {
+        nofralloc
+        mr r10, r3
+        bl getPortraitLoaded
+        cmpwi r3, 1             // check if portrait changed
+        mr r3, r10
+        mr r4, r3               // original instruction
+        beq continueChange
+
+        b _materialChangeSkip
+
+        continueChange:
+        b _materialChangeReturn
+    }
+
+    void setRandom()
+    {
+        register muSelCharPlayerArea* area;
+        // Pull vars from registers
+        asm
+        {
+            mr area, r30;
+        }
+
+        selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
+        thread->forcePortraitToLoad();
+
+        // area->m_muCharPic->changeMaterialTex(1, "MenSelchrFaceB.501");
+        // area->m_muCharPic->changeMaterialTex(0, "MenSelchrFaceB.501");
+    }
+
     asm void clearFranchiseIcons() {
         nofralloc
         cmpwi r31, 0x29	// if random, continue to call setFrameTex
@@ -342,6 +431,13 @@ namespace CSSHooks {
 
         if (moduleID == Modules::SORA_MENU_SEL_CHAR)
         {  
+            // Nop changeMaterialTex calls
+            // writeAddr = textAddr + 0x14D1C;
+            // *(u32*)writeAddr = 0x60000000;
+
+            // writeAddr = textAddr + 0x14D40;
+            // *(u32*)writeAddr = 0x60000000;
+
             #ifdef MEMORY_EXPANSION
             writeAddr = 0x80693B10; // Change copying to happen in the Fighter2Resource heap
             *(u32*)writeAddr = 0x38600013; // 43 (MenuResource) -> 19 (Fighter2Resource)
@@ -376,6 +472,22 @@ namespace CSSHooks {
                               reinterpret_cast<void*>(loadCharPic),
                               (void**)&_loadCharPic,
                               Modules::SORA_MENU_SEL_CHAR);
+        
+        // hook onto these functions so we can determine if portrait change was triggered by fighter changing
+        api->syReplaceFuncRel(0x0001469C,
+                            reinterpret_cast<void*>(setCharKind),
+                            (void**)&_setCharKind,
+                            Modules::SORA_MENU_SEL_CHAR);
+
+        api->syReplaceFuncRel(0x00012140,
+                            reinterpret_cast<void*>(setPoke3),
+                            (void**)&_setPoke3,
+                            Modules::SORA_MENU_SEL_CHAR);
+        
+        api->syReplaceFuncRel(0x00012070,
+                            reinterpret_cast<void*>(setZeldas),
+                            (void**)&_setZeldas,
+                            Modules::SORA_MENU_SEL_CHAR);
 
         #ifdef MEMORY_EXPANSION
         // hook to start deallocating PACs when we leave SSS
@@ -411,9 +523,18 @@ namespace CSSHooks {
                             reinterpret_cast<void*>(changeName),
                             Modules::SORA_MENU_SEL_CHAR);
 
+        api->sySimpleHookRel(0x00014D08,
+                            reinterpret_cast<void*>(skipPortraitChange),
+                            Modules::SORA_MENU_SEL_CHAR);
+
         // hook to clear existing franchise icon behavior
         api->sySimpleHookRel(0x00014810,
                             reinterpret_cast<void*>(clearFranchiseIcons),
+                            Modules::SORA_MENU_SEL_CHAR);
+        
+        // Hook to make random update portraits since regular portrait update got removed
+        api->syInlineHookRel(0x00014C90,
+                            reinterpret_cast<void*>(setRandom),
                             Modules::SORA_MENU_SEL_CHAR);
 
         #ifdef DEBUG

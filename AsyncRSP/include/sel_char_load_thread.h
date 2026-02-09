@@ -12,7 +12,9 @@ protected:
 
     gfFileIOHandle m_handle;
     muSelCharPlayerArea* m_playerArea;
-    void* m_buffer;
+    void * m_buffers[2];
+    int m_inactiveBuffer;
+    int m_activeBuffer;
     void* m_fileBuffer;
     int m_toLoad;
     int m_loaded;
@@ -20,7 +22,12 @@ protected:
     bool m_isRunning;
     bool m_shouldUpdateEmblem;
     bool m_shouldUpdateName;
+    bool m_shouldUpdatePortrait;
     int m_lastSelectedCharKind;
+    bool m_forcePortraitLoad;
+    // Below are for DLC.asm support only
+    bool m_fighterChange;
+    bool m_hiddenFighter;
 
 public:
     selCharLoadThread(muSelCharPlayerArea* area);
@@ -30,7 +37,8 @@ public:
     void suspend();
     void resume();
     void reset();
-    void* getActiveBuffer() { return m_buffer; }
+    void* getInactiveBuffer() { return m_buffers[m_inactiveBuffer]; }
+    void* getActiveBuffer() { return m_buffers[m_activeBuffer]; }
     void* getFileBuffer() { return m_fileBuffer; }
     bool isRunning() { return m_isRunning; }
     bool isReady() { return m_dataReady; }
@@ -42,11 +50,25 @@ public:
     bool findAndCopyThreadWithPortraitAlreadyLoaded(u8 selchKind);
     void setData(void* m_copy);
     void setFrameTex(u8 areaIdx, u8 frameIndex);
-    void imageLoaded() { m_shouldUpdateEmblem = true; m_shouldUpdateName = true; }
+    void imageLoaded() { m_shouldUpdateEmblem = true; m_shouldUpdateName = true; m_shouldUpdatePortrait = true; }
     bool shouldUpdateEmblem() { return m_shouldUpdateEmblem; }
     bool shouldUpdateName() { return m_shouldUpdateName; }
+    bool shouldUpdatePortrait() { return m_shouldUpdatePortrait; }
     void emblemUpdated() { m_shouldUpdateEmblem = false; }
     void nameUpdated() { m_shouldUpdateName = false; }
+    void portraitUpdated() { m_shouldUpdatePortrait = false; m_forcePortraitLoad = false; }
+    void swapBuffers() { int holdBuffer = m_activeBuffer; m_activeBuffer = m_inactiveBuffer; m_inactiveBuffer = holdBuffer; }
+    bool shouldForcePortrait() { return m_forcePortraitLoad; }
+    void forcePortraitToLoad() { m_forcePortraitLoad = true; }
+    void dataIsReady() { m_dataReady = true; }
+    void clearDataReady() { m_dataReady = false; }
+    int getLastSelectedCharKind() { return m_lastSelectedCharKind; }
+    bool isFighterChange() { return m_fighterChange; }
+    void setFighterChange() { m_fighterChange = true; }
+    void clearFighterChange() { m_fighterChange = false; }
+    bool isHiddenFighter() { return m_hiddenFighter; }
+    void setHiddenFighter() { m_hiddenFighter = true; }
+    void clearHiddenFighter() { m_hiddenFighter = false; }
 
     static bool isExcludedSelchKind(u8 selchKind);
     static bool isNoLoadSelchKind(u8 selchKind);

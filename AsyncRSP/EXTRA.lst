@@ -7,5 +7,7 @@
 8004e894:getGameFrame__10GameGlobalCFv
 10,1,00014D00:_logStuffReturn__8CSSHooksFv
 10,1,00014D98:_placeholderTextureSkip__8CSSHooksFv
+10,1,00014D44:_materialChangeSkip__8CSSHooksFv
+10,1,00014D0C:_materialChangeReturn__8CSSHooksFv
 
 10,6,00000008:selCharArchive__8CSSHooks
