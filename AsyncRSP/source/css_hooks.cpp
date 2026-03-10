@@ -260,7 +260,7 @@ namespace CSSHooks {
     {
         selCharLoadThread* thread = selCharLoadThread::getThread(area->m_areaIdx);
         thread->setFighterChange();
-        if (thread->getLastSelectedCharKind() == charKind)
+        if (thread->getLastSelectedCharKind() == charKind || charKind == 0x29) // Data is always ready on random to fix issues with DLC.asm
         {
             thread->dataIsReady();
         }
